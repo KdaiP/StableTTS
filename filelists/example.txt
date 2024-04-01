@@ -1,0 +1,2 @@
+./audio1.wav|你好，世界。
+./audio2.wav|Hello, world.

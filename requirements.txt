@@ -1,0 +1,12 @@
+torch
+torchaudio
+matplotlib
+numpy
+tensorboard
+einops
+pypinyin
+jieba
+eng_to_ipa
+unidecode
+inflect
+pyopenjtalk-prebuilt

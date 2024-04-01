@@ -1,0 +1,606 @@
+a,a
+ai,ai
+ai0,a0 I0
+an,an
+an0,a0 N0
+ang,ang
+ang0,A0 ng0
+ao,ao
+ao0,A0 O0
+ba,b a
+bai,b a0 I0
+ban,b a0 N0
+bang,b A0 ng0
+bao,b A0 O0
+be,b e
+bei,b E0 I0
+ben,b e0 N0
+beng,b e0 ng0
+ber,b er
+bi,b i
+bia,b ia
+bian,b iE0 N0
+biang,b iA0 ng0
+biao,b iA0 O0
+bie,b ie
+bin,b i N0
+bing,b i ng0
+biong,b iO0 ng0
+biu,b io0 U0
+bo,b o
+bong,b oo0 ng0
+bou,b o0 U0
+bu,b u
+bua,b ua
+buai,b ua0 I0
+buan,b ua0 N0
+buang,b uA0 ng0
+bui,b uE0 I0
+bun,b ue0 N0
+bv,b v
+bve,b ve
+ca,c a
+cai,c a0 I0
+can,c a0 N0
+cang,c A0 ng0
+cao,c A0 O0
+ce,c e
+cei,c E0 I0
+cen,c e0 N0
+ceng,c e0 ng0
+cer,c er
+cha,ch a
+chai,ch a0 I0
+chan,ch a0 N0
+chang,ch A0 ng0
+chao,ch A0 O0
+che,ch e
+chei,ch E0 I0
+chen,ch e0 N0
+cheng,ch e0 ng0
+cher,ch er
+chi,ch ir
+chong,ch oo0 ng0
+chou,ch o0 U0
+chu,ch u
+chua,ch ua
+chuai,ch ua0 I0
+chuan,ch ua0 N0
+chuang,ch uA0 ng0
+chui,ch uE0 I0
+chun,ch ue0 N0
+chuo,ch uo
+chv,ch v
+chyi,ch i
+ci,c i0
+cong,c oo0 ng0
+cou,c o0 U0
+cu,c u
+cua,c ua
+cuai,c ua0 I0
+cuan,c ua0 N0
+cuang,c uA0 ng0
+cui,c uE0 I0
+cun,c ue0 N0
+cuo,c uo
+cv,c v
+cyi,c i
+da,d a
+dai,d a0 I0
+dan,d a0 N0
+dang,d A0 ng0
+dao,d A0 O0
+de,d e
+dei,d E0 I0
+den,d e0 N0
+deng,d e0 ng0
+der,d er
+di,d i
+dia,d ia
+dian,d iE0 N0
+diang,d iA0 ng0
+diao,d iA0 O0
+die,d ie
+din,d i N0
+ding,d i ng0
+diong,d iO0 ng0
+diu,d io0 U0
+dong,d oo0 ng0
+dou,d o0 U0
+du,d u
+dua,d ua
+duai,d ua0 I0
+duan,d ua0 N0
+duang,d uA0 ng0
+dui,d uE0 I0
+dun,d ue0 N0
+duo,d uo
+dv,d v
+dve,d ve
+e,e
+ei,E0 I0
+en,e0 N0
+eng,e0 ng0
+er,er
+fa,f a
+fai,f a0 I0
+fan,f a0 N0
+fang,f A0 ng0
+fao,f A0 O0
+fe,f e
+fei,f E0 I0
+fen,f e0 N0
+feng,f e0 ng0
+fer,f er
+fi,f i
+fia,f ia
+fian,f iE0 N0
+fiang,f iA0 ng0
+fiao,f iA0 O0
+fie,f ie
+fin,f i N0
+fing,f i ng0
+fiong,f iO0 ng0
+fiu,f io0 U0
+fo,f o
+fong,f oo0 ng0
+fou,f o0 U0
+fu,f u
+fua,f ua
+fuai,f ua0 I0
+fuan,f ua0 N0
+fuang,f uA0 ng0
+fui,f uE0 I0
+fun,f ue0 N0
+fv,f v
+fve,f ve
+ga,g a
+gai,g a0 I0
+gan,g a0 N0
+gang,g A0 ng0
+gao,g A0 O0
+ge,g e
+gei,g E0 I0
+gen,g e0 N0
+geng,g e0 ng0
+ger,g er
+gi,g i
+gia,g ia
+gian,g iE0 N0
+giang,g iA0 ng0
+giao,g iA0 O0
+gie,g ie
+gin,g i N0
+ging,g i ng0
+giong,g iO0 ng0
+giu,g io0 U0
+gong,g oo0 ng0
+gou,g o0 U0
+gu,g u
+gua,g ua
+guai,g ua0 I0
+guan,g ua0 N0
+guang,g uA0 ng0
+gui,g uE0 I0
+gun,g ue0 N0
+guo,g uo
+gv,g v
+gve,g ve
+ha,h a
+hai,h a0 I0
+han,h a0 N0
+hang,h A0 ng0
+hao,h A0 O0
+he,h e
+hei,h E0 I0
+hen,h e0 N0
+heng,h e0 ng0
+her,h er
+hi,h i
+hia,h ia
+hian,h iE0 N0
+hiang,h iA0 ng0
+hiao,h iA0 O0
+hie,h ie
+hin,h i N0
+hing,h i ng0
+hiong,h iO0 ng0
+hiu,h io0 U0
+hong,h oo0 ng0
+hou,h o0 U0
+hu,h u
+hua,h ua
+huai,h ua0 I0
+huan,h ua0 N0
+huang,h uA0 ng0
+hui,h uE0 I0
+hun,h ue0 N0
+huo,h uo
+hv,h v
+hve,h ve
+ji,j i
+jia,j ia
+jian,j iE0 N0
+jiang,j iA0 ng0
+jiao,j iA0 O0
+jie,j ie
+jin,j i N0
+jing,j i ng0
+jiong,j iO0 ng0
+jiu,j io0 U0
+ju,j v
+juan,j vE0 N0
+jue,j ve
+jun,j v0 N0
+ka,k a
+kai,k a0 I0
+kan,k a0 N0
+kang,k A0 ng0
+kao,k A0 O0
+ke,k e
+kei,k E0 I0
+ken,k e0 N0
+keng,k e0 ng0
+ker,k er
+ki,k i
+kia,k ia
+kian,k iE0 N0
+kiang,k iA0 ng0
+kiao,k iA0 O0
+kie,k ie
+kin,k i N0
+king,k i ng0
+kiong,k iO0 ng0
+kiu,k io0 U0
+kong,k oo0 ng0
+kou,k o0 U0
+ku,k u
+kua,k ua
+kuai,k ua0 I0
+kuan,k ua0 N0
+kuang,k uA0 ng0
+kui,k uE0 I0
+kun,k ue0 N0
+kuo,k uo
+kv,k v
+kve,k ve
+la,l a
+lai,l a0 I0
+lan,l a0 N0
+lang,l A0 ng0
+lao,l A0 O0
+le,l e
+lei,l E0 I0
+len,l e0 N0
+leng,l e0 ng0
+ler,l er
+li,l i
+lia,l ia
+lian,l iE0 N0
+liang,l iA0 ng0
+liao,l iA0 O0
+lie,l ie
+lin,l i N0
+ling,l i ng0
+liong,l iO0 ng0
+liu,l io0 U0
+lo,l o
+long,l oo0 ng0
+lou,l o0 U0
+lu,l u
+lua,l ua
+luai,l ua0 I0
+luan,l ua0 N0
+luang,l uA0 ng0
+lui,l uE0 I0
+lun,l ue0 N0
+luo,l uo
+lv,l v
+lve,l ve
+ma,m a
+mai,m a0 I0
+man,m a0 N0
+mang,m A0 ng0
+mao,m A0 O0
+me,m e
+mei,m E0 I0
+men,m e0 N0
+meng,m e0 ng0
+mer,m er
+mi,m i
+mia,m ia
+mian,m iE0 N0
+miang,m iA0 ng0
+miao,m iA0 O0
+mie,m ie
+min,m i N0
+ming,m i ng0
+miong,m iO0 ng0
+miu,m io0 U0
+mo,m o
+mong,m oo0 ng0
+mou,m o0 U0
+mu,m u
+mua,m ua
+muai,m ua0 I0
+muan,m ua0 N0
+muang,m uA0 ng0
+mui,m uE0 I0
+mun,m ue0 N0
+mv,m v
+mve,m ve
+n,ng
+na,n a
+nai,n a0 I0
+nan,n a0 N0
+nang,n A0 ng0
+nao,n A0 O0
+ne,n e
+nei,n E0 I0
+nen,n e0 N0
+neng,n e0 ng0
+ner,n er
+ni,n i
+nia,n ia
+nian,n iE0 N0
+niang,n iA0 ng0
+niao,n iA0 O0
+nie,n ie
+nin,n i N0
+ning,n i ng0
+niong,n iO0 ng0
+niu,n io0 U0
+nong,n oo0 ng0
+nou,n o0 U0
+nu,n u
+nua,n ua
+nuai,n ua0 I0
+nuan,n ua0 N0
+nuang,n uA0 ng0
+nui,n uE0 I0
+nun,n ue0 N0
+nuo,n uo
+nv,n v
+nve,n ve
+o,o
+ong,ong
+ou,ou
+pa,p a
+pai,p a0 I0
+pan,p a0 N0
+pang,p A0 ng0
+pao,p A0 O0
+pe,p e
+pei,p E0 I0
+pen,p e0 N0
+peng,p e0 ng0
+per,p er
+pi,p i
+pia,p ia
+pian,p iE0 N0
+piang,p iA0 ng0
+piao,p iA0 O0
+pie,p ie
+pin,p i N0
+ping,p i ng0
+piong,p iO0 ng0
+piu,p io0 U0
+po,p o
+pong,p oo0 ng0
+pou,p o0 U0
+pu,p u
+pua,p ua
+puai,p ua0 I0
+puan,p ua0 N0
+puang,p uA0 ng0
+pui,p uE0 I0
+pun,p ue0 N0
+pv,p v
+pve,p ve
+qi,q i
+qia,q ia
+qian,q iE0 N0
+qiang,q iA0 ng0
+qiao,q iA0 O0
+qie,q ie
+qin,q i N0
+qing,q i ng0
+qiong,q iO0 ng0
+qiu,q io0 U0
+qu,q v
+quan,q vE0 N0
+que,q ve
+qun,q v0 N0
+ra,r a
+rai,r a0 I0
+ran,r a0 N0
+rang,r A0 ng0
+rao,r A0 O0
+re,r e
+rei,r E0 I0
+ren,r e0 N0
+reng,r e0 ng0
+rer,r er
+ri,r ir
+rong,r oo0 ng0
+rou,r o0 U0
+ru,r u
+rua,r ua
+ruai,r ua0 I0
+ruan,r ua0 N0
+ruang,r uA0 ng0
+rui,r uE0 I0
+run,r ue0 N0
+ruo,r uo
+rv,r v
+ryi,r i
+sa,s a
+sai,s a0 I0
+san,s a0 N0
+sang,s A0 ng0
+sao,s A0 O0
+se,s e
+sei,s E0 I0
+sen,s e0 N0
+seng,s e0 ng0
+ser,s er
+sha,sh a
+shai,sh a0 I0
+shan,sh a0 N0
+shang,sh A0 ng0
+shao,sh A0 O0
+she,sh e
+shei,sh E0 I0
+shen,sh e0 N0
+sheng,sh e0 ng0
+sher,sh er
+shi,sh ir
+shong,sh oo0 ng0
+shou,sh o0 U0
+shu,sh u
+shua,sh ua
+shuai,sh ua0 I0
+shuan,sh ua0 N0
+shuang,sh uA0 ng0
+shui,sh uE0 I0
+shun,sh ue0 N0
+shuo,sh uo
+shv,sh v
+shyi,sh i
+si,s i0
+song,s oo0 ng0
+sou,s o0 U0
+su,s u
+sua,s ua
+suai,s ua0 I0
+suan,s ua0 N0
+suang,s uA0 ng0
+sui,s uE0 I0
+sun,s ue0 N0
+suo,s uo
+sv,s v
+syi,s i
+ta,t a
+tai,t a0 I0
+tan,t a0 N0
+tang,t A0 ng0
+tao,t A0 O0
+te,t e
+tei,t E0 I0
+ten,t e0 N0
+teng,t e0 ng0
+ter,t er
+ti,t i
+tia,t ia
+tian,t iE0 N0
+tiang,t iA0 ng0
+tiao,t iA0 O0
+tie,t ie
+tin,t i N0
+ting,t i ng0
+tiong,t iO0 ng0
+tong,t oo0 ng0
+tou,t o0 U0
+tu,t u
+tua,t ua
+tuai,t ua0 I0
+tuan,t ua0 N0
+tuang,t uA0 ng0
+tui,t uE0 I0
+tun,t ue0 N0
+tuo,t uo
+tv,t v
+tve,t ve
+wa,w a
+wai,w a0 I0
+wan,w a0 N0
+wang,w A0 ng0
+wao,w A0 O0
+we,w e
+wei,w E0 I0
+wen,w e0 N0
+weng,w e0 ng0
+wer,w er
+wi,w i
+wo,w o
+wong,w oo0 ng0
+wou,w o0 U0
+wu,w u
+xi,x i
+xia,x ia
+xian,x iE0 N0
+xiang,x iA0 ng0
+xiao,x iA0 O0
+xie,x ie
+xin,x i N0
+xing,x i ng0
+xiong,x iO0 ng0
+xiu,x io0 U0
+xu,x v
+xuan,x vE0 N0
+xue,x ve
+xun,x v0 N0
+ya,y a
+yai,y a0 I0
+yan,y iE0 N0
+yang,y A0 ng0
+yao,y A0 O0
+ye,y E
+yei,y E0 I0
+yi,y i
+yin,y i N0
+ying,y i ng0
+yo,y o
+yong,y oo0 ng0
+you,y o0 U0
+yu,y v
+yuan,y vE0 N0
+yue,y ve
+yun,y v0 N0
+ywu,y u
+za,z a
+zai,z a0 I0
+zan,z a0 N0
+zang,z A0 ng0
+zao,z A0 O0
+ze,z e
+zei,z E0 I0
+zen,z e0 N0
+zeng,z e0 ng0
+zer,z er
+zha,zh a
+zhai,zh a0 I0
+zhan,zh a0 N0
+zhang,zh A0 ng0
+zhao,zh A0 O0
+zhe,zh e
+zhei,zh E0 I0
+zhen,zh e0 N0
+zheng,zh e0 ng0
+zher,zh er
+zhi,zh ir
+zhong,zh oo0 ng0
+zhou,zh o0 U0
+zhu,zh u
+zhua,zh ua
+zhuai,zh ua0 I0
+zhuan,zh ua0 N0
+zhuang,zh uA0 ng0
+zhui,zh uE0 I0
+zhun,zh ue0 N0
+zhuo,zh uo
+zhv,zh v
+zhyi,zh i
+zi,z i0
+zong,z oo0 ng0
+zou,z o0 U0
+zu,z u
+zua,z ua
+zuai,z ua0 I0
+zuan,z ua0 N0
+zuang,z uA0 ng0
+zui,z uE0 I0
+zun,z ue0 N0
+zuo,z uo
+zv,z v
+zyi,z i
