@@ -9,7 +9,7 @@ Next-generation TTS model using flow-matching and DiT, inspired by [Stable Diffu
 
 ## Introduction
 
-StableTTS is fast and lightweight TTS model for chinese and english speech generation. It has only 10M parameters
+As the first open-source model that tried to combine flow-matching and DiT, StableTTS is a fast and lightweight TTS model for chinese and english speech generation. It has only 10M parameters. 
 
 **Work is in progress now. Pretrained models and detailed instructions will be released soon!**
 
