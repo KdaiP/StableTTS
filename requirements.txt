@@ -10,3 +10,5 @@ eng_to_ipa
 unidecode
 inflect
 pyopenjtalk-prebuilt
+numba
+IPython
