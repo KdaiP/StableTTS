@@ -9,7 +9,7 @@ Next-generation TTS model using flow-matching and DiT, inspired by [Stable Diffu
 
 ## Introduction
 
-As the first open-source model that tried to combine flow-matching and DiT, StableTTS is a fast and lightweight TTS model for chinese and english speech generation. It has only 10M parameters. 
+As the first open-source TTS model that tried to combine flow-matching and DiT, StableTTS is a fast and lightweight TTS model for chinese and english speech generation. It has only 10M parameters. 
 
 **Work is in progress now. Pretrained models and detailed instructions will be released soon!**
 
@@ -24,24 +24,61 @@ Setting up and training your model with StableTTS is straightforward. Follow the
 
 ### Preparing Your Data
 
-1. **Generate Text and Audio pairs**: Please generate the text and audio pair filelist as `./filelists/example.txt`. Some recipes of open-source datasets could be found in `./recipes`.
+1. **Generate Text and Audio pairs**: Generate the text and audio pair filelist as `./filelists/example.txt`. Some recipes of open-source datasets could be found in `./recipes`. (Since we use reference encoder to capture speaker identity, there is no need for a speaker ID in multispeaker synthesis and training.)
 
-2. **Run Preprocessing**: Run `preprocess.py`. This script will process the audios and texts based on the filelist.
+2. **Run Preprocessing**: Adjust the `DataConfig` in `preprocess.py` to set your input and output paths, then run the script. This will process the audio and text according to your list, outputting a JSON file with paths to resampled audios, mel features, and phonemes. **Note: Ensure to switch `chinese=False` in `DataConfig` for English text processing.**
 
 ### Start training
 
-1. **Adjust Training Configuration**: Edit `TrainConfig` in `config.py` to specify the file list path and tweak training hyperparameters to your needs.
+1. **Adjust Training Configuration**:  In `config.py`, modify `TrainConfig` to set your file list path and adjust training parameters as needed.
 
-2. **Start the Training Process**: Launch `train.py` to begin training your model.
+2. **Start the Training Process**: Launch `train.py` to start training your model.
 
 ### Experiment with Configurations
 
-Feel free to explore and modify settings in `config.py` to modify the hyperparameters of vocos!
+Feel free to explore and modify settings in `config.py` to modify the hyperparameters!
+
+
+## Pretrained models
+
+| Model Name | Task Details | Download Link |
+|:----------:|:------------:|:-------------:|
+| StableTTS | text to mel | Model is currently in training...|
+| Vocos | mel to wav | [🤗](https://huggingface.co/KdaiP/StableTTS/blob/main/vocos.pt)|
 
 ## References
 
-Most of the codes are borrowed from:
+The development of our models heavily relies on insights and code from various projects. We express our heartfelt thanks to the creators of the following:
 
-[Matcha TTS](https://github.com/shivammehta25/Matcha-TTS)
+### Direct Inspirations
 
-[Grad TTS](https://github.com/huawei-noah/Speech-Backbones/tree/main/Grad-TTS)
+[Matcha TTS](https://github.com/shivammehta25/Matcha-TTS): Essential flow-matching code.
+
+[Grad TTS](https://github.com/huawei-noah/Speech-Backbones/tree/main/Grad-TTS): Diffusion model structure.
+
+[Stable Diffusion 3](https://stability.ai/news/stable-diffusion-3): Idea of combining flow-matching and DiT.
+
+[Vits](https://github.com/jaywalnut310/vits): Code style and MAS insights.
+
+### Additional References:
+
+[plowtts-pytorch](https://github.com/p0p4k/pflowtts_pytorch): codes of MAS in training
+
+[Bert-VITS2](https://github.com/Plachtaa/VITS-fast-fine-tuning) : numba version of MAS and modern pytorch codes of Vits
+
+[fish-speech](https://github.com/fishaudio/fish-speech): dataclass usage and mel-spectrogram transforms using torchaudio
+
+[gpt-sovits](https://github.com/RVC-Boss/GPT-SoVITS): melstyle encoder for voice clone
+
+## TODO
+
+- [ ] Release pretrained models.
+- [ ] Provide finetuning instructions.
+- [ ] Support Japanese language.
+- [ ] User friendly preprocess and inference script.
+- [ ] Enhance documentation and citations.
+- [ ] Add chinese version of readme.
+
+## Disclaimer
+
+Any organization or individual is prohibited from using any technology in this repo to generate or edit someone's speech without his/her consent, including but not limited to government leaders, political figures, and celebrities. If you do not comply with this item, you could be in violation of copyright laws.

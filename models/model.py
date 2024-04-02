@@ -33,6 +33,7 @@ def generate_path(duration, mask):
     path = path * mask
     return path
 
+# modified from https://github.com/shivammehta25/Matcha-TTS/blob/main/matcha/models/matcha_tts.py
 class StableTTS(nn.Module):
     def __init__(self, n_vocab, mel_channels, hidden_channels, filter_channels, n_heads, n_layers, kernel_size, p_dropout, gin_channels):
         super().__init__()
@@ -60,8 +61,8 @@ class StableTTS(nn.Module):
                 shape: (batch_size,)
             n_timesteps (int): number of steps to use for reverse diffusion in decoder.
             temperature (float, optional): controls variance of terminal distribution.
-            spks (bool, optional): speaker ids.
-                shape: (batch_size,)
+            y (torch.Tensor): mel spectrogram of reference audio
+                shape: (batch_size, mel_channels, time)
             length_scale (float, optional): controls speech pace.
                 Increase value to slow down generated speech and vice versa.
 
@@ -73,12 +74,6 @@ class StableTTS(nn.Module):
                 # Refined mel spectrogram improved by the CFM
                 "attn": torch.Tensor, shape: (batch_size, max_text_length, max_mel_length),
                 # Alignment map between text and mel spectrogram
-                "mel": torch.Tensor, shape: (batch_size, n_feats, max_mel_length),
-                # Denormalized mel spectrogram
-                "mel_lengths": torch.Tensor, shape: (batch_size,),
-                # Lengths of mel spectrograms
-                "rtf": float,
-                # Real-time factor
         """
 
         # Get encoder_outputs `mu_x` and log-scaled token durations `logw`
@@ -128,10 +123,6 @@ class StableTTS(nn.Module):
                 shape: (batch_size, n_feats, max_mel_length)
             y_lengths (torch.Tensor): lengths of mel-spectrograms in batch.
                 shape: (batch_size,)
-            out_size (int, optional): length (in mel's sampling rate) of segment to cut, on which decoder will be trained.
-                Should be divisible by 2^{num of UNet downsamplings}. Needed to increase batch size.
-            spks (torch.Tensor, optional): speaker ids.
-                shape: (batch_size,)
         """
         # Get encoder_outputs `mu_x` and log-scaled token durations `logw`
         y_mask = sequence_mask(y_lengths, y.size(2)).unsqueeze(1).to(y.dtype)
@@ -143,6 +134,11 @@ class StableTTS(nn.Module):
         attn_mask = x_mask.unsqueeze(-1) * y_mask.unsqueeze(2)
         
         # Use MAS to find most likely alignment `attn` between text and mel-spectrogram
+        
+        # I'm not sure why the MAS code in Matcha TTS and Grad TTS could not align in StableTTS
+        # so I use the code from https://github.com/p0p4k/pflowtts_pytorch/blob/master/pflow/models/pflow_tts.py and it works
+        # Welcome everyone to solve this problem QAQ
+        
         with torch.no_grad():
             # const = -0.5 * math.log(2 * math.pi) * self.n_feats
             # const = -0.5 * math.log(2 * math.pi) * self.mel_channels

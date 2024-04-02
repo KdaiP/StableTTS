@@ -9,6 +9,7 @@ def sequence_mask(length: torch.Tensor, max_length: int = None) -> torch.Tensor:
     x = torch.arange(max_length, dtype=length.dtype, device=length.device)
     return x.unsqueeze(0) < length.unsqueeze(1)
 
+# modified from https://github.com/jaywalnut310/vits/blob/main/models.py
 class TextEncoder(nn.Module):
     def __init__(self, n_vocab, out_channels, hidden_channels, filter_channels, n_heads, n_layers, kernel_size, p_dropout, gin_channels):
         super().__init__()

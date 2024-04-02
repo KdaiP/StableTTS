@@ -8,6 +8,7 @@ from einops import pack
 from models.dit import DiTConVBlock
 
 class DitWrapper(nn.Module):
+    """ add FiLM layer to condition time embedding to DiT"""
     def __init__(self, hidden_channels, filter_channels, num_heads, kernel_size=3, p_dropout=0.1, gin_channels=0, time_channels=0):
         super().__init__()
         self.block = DiTConVBlock(hidden_channels, filter_channels, num_heads, kernel_size, p_dropout, gin_channels)
@@ -19,6 +20,10 @@ class DitWrapper(nn.Module):
         return x
 
 class FiLMLayer(nn.Module):
+    """
+    Feature-wise Linear Modulation (FiLM) layer
+    Reference: https://arxiv.org/abs/1709.07871
+    """
     def __init__(self, in_channels, cond_channels):
 
         super(FiLMLayer, self).__init__()
@@ -48,8 +53,6 @@ class SinusoidalPosEmb(nn.Module):
         emb = torch.cat((emb.sin(), emb.cos()), dim=-1)
         return emb
 
-
-
 class TimestepEmbedding(nn.Module):
     def __init__(self, in_channels, out_channels, filter_channels):
         super().__init__()
@@ -63,7 +66,7 @@ class TimestepEmbedding(nn.Module):
     def forward(self, x):
         return self.layer(x)
 
-
+# reference: https://github.com/shivammehta25/Matcha-TTS/blob/main/matcha/models/components/decoder.py
 class Decoder(nn.Module):
     def __init__(self, hidden_channels, out_channels, filter_channels, dropout=0.05, n_layers=1, n_heads=4, kernel_size=3, gin_channels=0):
         super().__init__()
@@ -92,8 +95,7 @@ class Decoder(nn.Module):
             x (torch.Tensor): shape (batch_size, in_channels, time)
             mask (_type_): shape (batch_size, 1, time)
             t (_type_): shape (batch_size)
-            spks (_type_, optional): shape: (batch_size, condition_channels). Defaults to None.
-            cond (_type_, optional): placeholder for future use. Defaults to None.
+            c (_type_): shape (batch_size, gin_channels)
 
         Raises:
             ValueError: _description_

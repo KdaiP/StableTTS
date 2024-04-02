@@ -20,7 +20,8 @@ class Conv1dGLU(nn.Module):
         x = x1 * torch.sigmoid(x2)
         x = residual + self.dropout(x)
         return x
-    
+
+# modified from https://github.com/RVC-Boss/GPT-SoVITS/blob/main/GPT_SoVITS/module/modules.py#L766    
 class MelStyleEncoder(nn.Module):
     """MelStyleEncoder"""
 

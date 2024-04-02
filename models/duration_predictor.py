@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+# modified from https://github.com/jaywalnut310/vits/blob/main/models.py#L98
 class DurationPredictor(nn.Module):
   def __init__(self, in_channels, filter_channels, kernel_size, p_dropout, gin_channels=0):
     super().__init__()

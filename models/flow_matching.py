@@ -4,12 +4,14 @@ import torch.nn.functional as F
 
 from models.estimator import Decoder
 
+# copied from https://github.com/jaywalnut310/vits/blob/main/commons.py#L121
 def sequence_mask(length: torch.Tensor, max_length: int = None) -> torch.Tensor:
     if max_length is None:
         max_length = length.max()
     x = torch.arange(max_length, dtype=length.dtype, device=length.device)
     return x.unsqueeze(0) < length.unsqueeze(1)
 
+# modified from https://github.com/shivammehta25/Matcha-TTS/blob/main/matcha/models/components/flow_matching.py
 class CFMDecoder(torch.nn.Module):
     def __init__(self, hidden_channels, out_channels, filter_channels, n_heads, n_layers, kernel_size, p_dropout, gin_channels):
         super().__init__()
@@ -32,9 +34,7 @@ class CFMDecoder(torch.nn.Module):
                 shape: (batch_size, 1, mel_timesteps)
             n_timesteps (int): number of diffusion steps
             temperature (float, optional): temperature for scaling noise. Defaults to 1.0.
-            spks (torch.Tensor, optional): speaker ids. Defaults to None.
-                shape: (batch_size, spk_emb_dim)
-            cond: Not used but kept for future purposes
+            c (torch.Tensor, optional): shape: (batch_size, gin_channels)
 
         Returns:
             sample: generated mel-spectrogram
@@ -55,9 +55,8 @@ class CFMDecoder(torch.nn.Module):
                 shape: (batch_size, n_feats, mel_timesteps)
             mask (torch.Tensor): output_mask
                 shape: (batch_size, 1, mel_timesteps)
-            spks (torch.Tensor, optional): speaker ids. Defaults to None.
-                shape: (batch_size, spk_emb_dim)
-            cond: Not used but kept for future purposes
+            c (torch.Tensor, optional): speaker condition.
+                shape: (batch_size, gin_channels)
         """
         t, _, dt = t_span[0], t_span[-1], t_span[1] - t_span[0]
 
@@ -86,8 +85,7 @@ class CFMDecoder(torch.nn.Module):
                 shape: (batch_size, 1, mel_timesteps)
             mu (torch.Tensor): output of encoder
                 shape: (batch_size, n_feats, mel_timesteps)
-            spks (torch.Tensor, optional): speaker embedding. Defaults to None.
-                shape: (batch_size, spk_emb_dim)
+            c (torch.Tensor, optional): speaker condition.
 
         Returns:
             loss: conditional flow matching loss

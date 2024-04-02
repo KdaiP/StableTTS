@@ -1,3 +1,8 @@
+# References:
+# https://github.com/shivammehta25/Matcha-TTS/blob/main/matcha/models/components/transformer.py
+# https://github.com/jaywalnut310/vits/blob/main/attentions.py
+# https://github.com/pytorch-labs/gpt-fast/blob/main/model.py
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -72,7 +77,8 @@ class MultiHeadAttention(nn.Module):
       output = F.scaled_dot_product_attention(query, key, value, attn_mask=mask, dropout_p=self.p_dropout if self.training else 0)
       output = output.transpose(2, 3).contiguous().view(b, d, t_t)  # [b, n_h, t_t, d_k] -> [b, d, t_t]
       return output
-    
+
+# modified from https://github.com/sh-lee-prml/HierSpeechpp/blob/main/modules.py#L390    
 class DiTConVBlock(nn.Module):
     """
     A DiT block with adaptive layer norm zero (adaLN-Zero) conditioning.
@@ -105,7 +111,7 @@ class DiTConVBlock(nn.Module):
         x = x + gate_msa * self.attn(self.modulate(self.norm1(x.transpose(1,2)).transpose(1,2), shift_msa, scale_msa), attn_mask) * x_mask
         x = x + gate_mlp * self.mlp(self.modulate(self.norm2(x.transpose(1,2)).transpose(1,2), shift_mlp, scale_mlp), x_mask)
         
-        # no condition
+        # no condition version
         # x = x + self.attn(self.norm1(x.transpose(1,2)).transpose(1,2),  attn_mask)
         # x = x + self.mlp(self.norm1(x.transpose(1,2)).transpose(1,2), x_mask)
         return x
@@ -113,7 +119,7 @@ class DiTConVBlock(nn.Module):
     @staticmethod
     def modulate(x, shift, scale):
         return x * (1 + scale) + shift
-    
+  
 class RotaryPositionalEmbeddings(nn.Module):
     """
     ## RoPE module
