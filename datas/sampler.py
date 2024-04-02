@@ -1,5 +1,6 @@
 import torch
 
+# reference: https://github.com/jaywalnut310/vits/blob/main/data_utils.py
 class DistributedBucketSampler(torch.utils.data.distributed.DistributedSampler):
     """
     Maintain similar input lengths in a batch.
