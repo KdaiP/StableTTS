@@ -25,7 +25,8 @@ class ModelConfig:
     hidden_channels: int = 192
     filter_channels: int = 512
     n_heads: int = 2
-    n_layers: int = 3 
+    n_enc_layers: int = 3 
+    n_dec_layers: int = 2 
     kernel_size: int = 3
     p_dropout: int = 0.1
     gin_channels: int = 192
@@ -34,7 +35,7 @@ class ModelConfig:
 class TrainConfig:
     train_dataset_path: str = 'filelists/filelist.json'
     test_dataset_path: str = 'filelists/filelist.json'
-    batch_size: int = 52
+    batch_size: int = 48
     learning_rate: float = 1e-4
     num_epochs: int = 10000
     model_save_path: str = './checkpoints'
@@ -42,8 +43,6 @@ class TrainConfig:
     log_interval: int = 128
     save_interval: int = 15
     warmup_steps: int = 200
-    
-    segment_size = 20480
     
 @dataclass
 class VocosConfig:

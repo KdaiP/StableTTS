@@ -9,9 +9,9 @@ import openpyxl # use to open excel. run ! pip install openpyxl
 # download_link: https://www.bilibili.com/read/cv23965717
 @dataclass
 class DataConfig:
-    dataset_path = './raw_datasets/Genshin_chinese4.5/原神语音包4.5（中）'
-    excel_path = './raw_datasets/Genshin_chinese4.5/原神4.5语音包对应文本（中）.xlsx'
-    output_filelist_path = './filelists/genshin_zh.txt'
+    dataset_path = './raw_datasets/Genshin_chinese4.5/原神语音包4.5（英）'
+    excel_path = './raw_datasets/Genshin_chinese4.5/原神4.5语音包对应文本（英）.xlsx'
+    output_filelist_path = './filelists/genshin_en.txt'
 
 # 若文本中出现以下字符，基本和语音对不上
 FORBIDDEN_TEXTS = ["……", "{NICKNAME}", "#", "(", ")", "♪", "test", "{0}", "█", "*", "█", "+", "Gohus"]

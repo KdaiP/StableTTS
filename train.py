@@ -1,5 +1,5 @@
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '6,7'
+# os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
 
 import torch
 import torch.nn as nn

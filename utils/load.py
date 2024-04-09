@@ -35,4 +35,9 @@ def continue_training(checkpoint_path, model: DDP, optimizer: optim.Optimizer) -
         return max_epoch + 1
     
     else:
+        # load pretrained checkpoint
+        if model_dict:
+            model_path = os.path.join(checkpoint_path, model_dict[max(model_dict.keys())])
+            model.module.load_state_dict(torch.load(model_path, map_location='cpu'))
+            
         return 0

@@ -1,8 +1,11 @@
+import os
+os.environ['TMPDIR'] = './temps' # avoid the system default temp folder not having access permissions
+os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com' # use huggingfacae mirror for users that could not login to huggingface
+
 from dataclasses import asdict
 from text import symbols
 import torch
 import torchaudio
-from IPython.display import Audio, display
 
 from utils.audio import LogMelSpectrogram
 from config import ModelConfig, VocosConfig, MelConfig
@@ -14,66 +17,128 @@ from text import cleaned_text_to_sequence
 from datas.dataset import intersperse
 
 import gradio as gr
+import numpy as np
+import matplotlib.pyplot as plt
+from pathlib import Path
+
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 @ torch.inference_mode()
-def inference(text: str, ref_audio: torch.Tensor, tts_model: StableTTS, mel_extractor: LogMelSpectrogram, vocoder: Vocos, phonemizer, sample_rate: int, step: int=10) -> torch.Tensor:
-    x = torch.tensor(intersperse(cleaned_text_to_sequence(phonemizer(text)), item=0), dtype=torch.long).unsqueeze(0)
-    x_len = torch.tensor([x.size(-1)], dtype=torch.long)
+def inference(text: str, ref_audio: torch.Tensor, language: str, checkpoint_path: str, step: int=10) -> torch.Tensor:
+    global last_checkpoint_path
+    if checkpoint_path != last_checkpoint_path:
+        tts_model.load_state_dict(torch.load(checkpoint_path, map_location='cpu')) 
+        last_checkpoint_path = checkpoint_path
+        
+    phonemizer = chinese_to_cnm3 if language == 'chinese' else english_to_ipa2
+    
+    # prepare input for tts model
+    x = torch.tensor(intersperse(cleaned_text_to_sequence(phonemizer(text)), item=0), dtype=torch.long, device=device).unsqueeze(0)
+    x_len = torch.tensor([x.size(-1)], dtype=torch.long, device=device)
     waveform, sr = torchaudio.load(ref_audio)
     if sr != sample_rate:
         waveform = torchaudio.functional.resample(waveform, sr, sample_rate)
-    y = mel_extractor(waveform)
-    print(y.shape)
-    mel = tts_model.synthesise(x, x_len, step, y=y, length_scale=1)['decoder_outputs']
+    y = mel_extractor(waveform).to(device)
+    
+    # inference
+    mel = tts_model.synthesise(x, x_len, step, y=y, temperature=1, length_scale=1)['decoder_outputs']
     audio = vocoder(mel)
-    return audio, mel
+    
+    # process output for gradio
+    audio_output = (sample_rate, (audio.cpu().squeeze(0).numpy() * 32767).astype(np.int16)) # (samplerate, int16 audio) for gr.Audio
+    mel_output = plot_mel_spectrogram(mel.cpu().squeeze(0).numpy()) # get the plot of mel
+    return audio_output, mel_output
 
 def get_pipeline(n_vocab: int, tts_model_config: ModelConfig, mel_config: MelConfig, vocoder_config: VocosConfig, tts_checkpoint_path, vocoder_checkpoint_path):
     tts_model = StableTTS(n_vocab, mel_config.n_mels, **asdict(tts_model_config))
     mel_extractor = LogMelSpectrogram(mel_config)
     vocoder = Vocos(vocoder_config, mel_config)
-    tts_model.load_state_dict(torch.load(tts_checkpoint_path, map_location='cpu'))
+    # tts_model.load_state_dict(torch.load(tts_checkpoint_path, map_location='cpu'))
+    tts_model.to(device)
+    tts_model.eval()
     vocoder.load_state_dict(torch.load(vocoder_checkpoint_path, map_location='cpu'))
+    vocoder.to(device)
+    vocoder.eval()
     return tts_model, mel_extractor, vocoder
 
-def stable_tts(text, reference_audio, tts_checkpoint_path='./pretrained_checkpoints/stabletts_pretrained.pt', vocoder_checkpoint_path='./pretrained_checkpoints/vocos_pretrained.pt'):
+def plot_mel_spectrogram(mel_spectrogram):
+    fig, ax = plt.subplots(figsize=(20, 8))
+    ax.imshow(mel_spectrogram, aspect='auto', origin='lower')
+    plt.axis('off')
+    fig.subplots_adjust(left=0, right=1, top=1, bottom=0) # remove white edges
+    return fig
+
+
+def main():
     tts_model_config = ModelConfig()
     mel_config = MelConfig()
     vocoder_config = VocosConfig()
 
-    tts_model, mel_extractor, vocoder = get_pipeline(len(symbols), 
-                                                     tts_model_config=tts_model_config, 
-                                                     mel_config=mel_config, 
-                                                     vocoder_config=vocoder_config, 
-                                                     tts_checkpoint_path=tts_checkpoint_path, 
-                                                     vocoder_checkpoint_path=vocoder_checkpoint_path)
+    tts_checkpoint_path = './checkpoints' # the folder that contains StableTTS checkpoints
+    vocoder_checkpoint_path = './checkpoints/vocoder.pt'
+
+    global tts_model, mel_extractor, vocoder, sample_rate, last_checkpoint_path
+    sample_rate = mel_config.sample_rate
+    last_checkpoint_path = None
+    tts_model, mel_extractor, vocoder = get_pipeline(len(symbols), tts_model_config, mel_config, vocoder_config, tts_checkpoint_path, vocoder_checkpoint_path)
     
-    total_params = sum(p.numel() for p in tts_model.parameters()) / 1e6
-    print(total_params)
-    chinese = True
-    phonemizer = chinese_to_cnm3 if chinese else english_to_ipa2
+    tts_checkpoint_path = [path for path in Path(tts_checkpoint_path).rglob('*.pt') if 'optimizer' and 'vocoder' not in path.name]
 
-    output, mel = inference(text=text, 
-                            ref_audio=reference_audio, 
-                            tts_model=tts_model, 
-                            mel_extractor=mel_extractor, 
-                            vocoder=vocoder, 
-                            phonemizer=phonemizer, 
-                            sample_rate=mel_config.sample_rate, 
-                            step=15)
-    return output  
+    # gradio wabui
+    gui_title = 'StableTTS'
+    gui_description = """Next-generation TTS model using flow-matching and DiT, inspired by Stable Diffusion 3."""
+    with gr.Blocks(analytics_enabled=False) as demo:
+
+        with gr.Row():
+            with gr.Column():
+                gr.Markdown(f"# {gui_title}")
+                gr.Markdown(gui_description)
+
+        with gr.Row():
+            with gr.Column():
+                input_text_gr = gr.Textbox(
+                    label="Input Text",
+                    info="One or two sentences at a time is better. Up to 200 text characters.",
+                    value="你好，世界！",
+                )
+             
+                ref_audio_gr = gr.Audio(
+                    label="Reference Speaker",
+                    type="filepath"
+                )
+                
+                language_gr = gr.Dropdown(
+                    label='Language',
+                    choices=['chinese', 'english'],
+                    value = 'chinese'
+                )
+                
+                checkpoint_gr = gr.Dropdown(
+                    label='checkpoint',
+                    choices=tts_checkpoint_path,
+                    value = 0
+                )
+                
+                step_gr = gr.Slider(
+                    label='Step',
+                    minimum=1,
+                    maximum=100,
+                    value=25,
+                    step=1
+                )
 
 
-app = gr.Interface(
-    fn=stable_tts,
-    inputs=[
-        gr.Textbox(lines=4, label="Input Text"),
-        gr.File(label="Reference audio"),
-        gr.File(label="TTS checkpoint path"),
-        gr.File(label="Vocoder checkpoint path")
-    ],
-    outputs=gr.Audio(label="Generated Voice")
-)
+                tts_button = gr.Button("Send", elem_id="send-btn", visible=True)
+                
+            with gr.Column():
+                mel_gr = gr.Plot(label="Mel Visual")
+                audio_gr = gr.Audio(label="Synthesised Audio", autoplay=True)
 
-app.launch()
+        tts_button.click(inference, [input_text_gr, ref_audio_gr, language_gr, checkpoint_gr, step_gr], outputs=[audio_gr, mel_gr])
 
+    demo.queue()  
+    demo.launch(debug=True, show_api=True)
+
+
+if __name__ == '__main__':
+    main()
