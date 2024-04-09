@@ -10,4 +10,5 @@ unidecode
 inflect
 pyopenjtalk-prebuilt
 numba
+tqdm
 IPython
