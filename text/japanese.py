@@ -141,7 +141,7 @@ def japanese_to_ipa2(text):
     text = get_real_hatsuon(text)
     for regex, replacement in _romaji_to_ipa2:
         text = re.sub(regex, replacement, text)
-    return text
+    return list(text)
 
 
 def japanese_to_ipa3(text):
