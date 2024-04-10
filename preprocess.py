@@ -9,6 +9,7 @@ import torchaudio
 from config import MelConfig, TrainConfig
 from text.mandarin import chinese_to_cnm3
 from text.english import english_to_ipa2
+from text.japanese import japanese_to_ipa2
 from utils.audio import LogMelSpectrogram, load_and_resample_audio
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -18,8 +19,14 @@ class DataConfig:
     input_filelist_path = './filelists/filelist.txt' # a filelist contains 'audiopath | text'
     output_filelist_path = './filelists/filelist.json' # path to save filelist
     output_feature_path = './stableTTS_datasets' # path to save resampled audios and mel features
-    chinese = True # if use english, set the value tu False
+    language = 'japanese' # chinese, japanese, english
     resample = False # waveform is not used in training. However, it is used to calculate length for DistributedBucketSampler in training. Different samplerate or format may cause wrong bucket.
+
+g2p_mapping = {
+    'chinese': chinese_to_cnm3,
+    'japanese': japanese_to_ipa2,
+    'english': english_to_ipa2,
+}
             
 data_config = DataConfig()
 train_config = TrainConfig()
@@ -38,7 +45,9 @@ if data_config.resample:
 os.makedirs(os.path.dirname(output_filelist_path), exist_ok=True)
 
 mel_extractor = LogMelSpectrogram(mel_config).to(device)
-g2p = chinese_to_cnm3 if data_config.chinese else english_to_ipa2 # now we only support chinese and english
+
+# 使用字典来获取相应的函数
+g2p = g2p_mapping.get(data_config.language)
     
 def load_filelist(path) -> list:
     file_list = []
