@@ -65,16 +65,19 @@ def process_filelist(line) -> str:
         # get output path
         audio_name, _ = os.path.splitext(os.path.basename(audio_path))
         
-        phone = g2p(text)
-        if len(phone) > 0:
-            mel = mel_extractor(audio.to(device)).cpu().squeeze(0) # shape: [n_mels, time // hop_length]
-            output_mel_path = os.path.join(output_mel_dir, f'{idx}_{audio_name}.pt')
-            torch.save(mel, output_mel_path)
-            
-            if data_config.resample:
-                audio_path = os.path.join(output_wav_dir, f'{idx}_{audio_name}.wav')
-                torchaudio.save(audio_path, audio.cpu(), mel_config.sample_rate)
-            return json.dumps({'mel_path': output_mel_path, 'phone': phone, 'audio_path': audio_path, 'text': text}, ensure_ascii=False, allow_nan=False)
+        try:
+            phone = g2p(text)
+            if len(phone) > 0:
+                mel = mel_extractor(audio.to(device)).cpu().squeeze(0) # shape: [n_mels, time // hop_length]
+                output_mel_path = os.path.join(output_mel_dir, f'{idx}_{audio_name}.pt')
+                torch.save(mel, output_mel_path)
+                
+                if data_config.resample:
+                    audio_path = os.path.join(output_wav_dir, f'{idx}_{audio_name}.wav')
+                    torchaudio.save(audio_path, audio.cpu(), mel_config.sample_rate)
+                return json.dumps({'mel_path': output_mel_path, 'phone': phone, 'audio_path': audio_path, 'text': text}, ensure_ascii=False, allow_nan=False)
+        except Exception as e:
+            print(f'Error processing {audio_path}: {str(e)}')
             
 
 def main():
