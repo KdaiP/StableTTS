@@ -116,7 +116,7 @@ def main():
                 checkpoint_gr = gr.Dropdown(
                     label='checkpoint',
                     choices=tts_checkpoint_path,
-                    value = 0
+                    value = tts_checkpoint_path[0]
                 )
                 
                 step_gr = gr.Slider(
