@@ -13,6 +13,7 @@ from models.model import StableTTS
 from vocos_pytorch.models.model import Vocos
 from text.mandarin import chinese_to_cnm3
 from text.english import english_to_ipa2
+from text.japanese import japanese_to_ipa2
 from text import cleaned_text_to_sequence
 from datas.dataset import intersperse
 
@@ -23,6 +24,12 @@ from pathlib import Path
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
+g2p_mapping = {
+    'chinese': chinese_to_cnm3,
+    'japanese': japanese_to_ipa2,
+    'english': english_to_ipa2,
+}
+
 @ torch.inference_mode()
 def inference(text: str, ref_audio: torch.Tensor, language: str, checkpoint_path: str, step: int=10) -> torch.Tensor:
     global last_checkpoint_path
@@ -30,7 +37,7 @@ def inference(text: str, ref_audio: torch.Tensor, language: str, checkpoint_path
         tts_model.load_state_dict(torch.load(checkpoint_path, map_location='cpu')) 
         last_checkpoint_path = checkpoint_path
         
-    phonemizer = chinese_to_cnm3 if language == 'chinese' else english_to_ipa2
+    phonemizer = g2p_mapping.get(language)
     
     # prepare input for tts model
     x = torch.tensor(intersperse(cleaned_text_to_sequence(phonemizer(text)), item=0), dtype=torch.long, device=device).unsqueeze(0)
@@ -62,6 +69,7 @@ def get_pipeline(n_vocab: int, tts_model_config: ModelConfig, mel_config: MelCon
     return tts_model, mel_extractor, vocoder
 
 def plot_mel_spectrogram(mel_spectrogram):
+    plt.close() # prevent memory leak
     fig, ax = plt.subplots(figsize=(20, 8))
     ax.imshow(mel_spectrogram, aspect='auto', origin='lower')
     plt.axis('off')
@@ -109,7 +117,7 @@ def main():
                 
                 language_gr = gr.Dropdown(
                     label='Language',
-                    choices=['chinese', 'english'],
+                    choices=list(g2p_mapping.keys()),
                     value = 'chinese'
                 )
                 

@@ -9,6 +9,7 @@ import torchaudio
 from config import MelConfig, TrainConfig
 from text.mandarin import chinese_to_cnm3
 from text.english import english_to_ipa2
+from text.japanese import japanese_to_ipa2
 from utils.audio import LogMelSpectrogram, load_and_resample_audio
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -18,8 +19,14 @@ class DataConfig:
     input_filelist_path = './filelists/filelist.txt' # a filelist contains 'audiopath | text'
     output_filelist_path = './filelists/filelist.json' # path to save filelist
     output_feature_path = './stableTTS_datasets' # path to save resampled audios and mel features
-    chinese = True # if use english, set the value tu False
+    language = 'chinese' # chinese, japanese or english
     resample = False # waveform is not used in training. However, it is used to calculate length for DistributedBucketSampler in training. Different samplerate or format may cause wrong bucket.
+
+g2p_mapping = {
+    'chinese': chinese_to_cnm3,
+    'japanese': japanese_to_ipa2,
+    'english': english_to_ipa2,
+}
             
 data_config = DataConfig()
 train_config = TrainConfig()
@@ -38,7 +45,8 @@ if data_config.resample:
 os.makedirs(os.path.dirname(output_filelist_path), exist_ok=True)
 
 mel_extractor = LogMelSpectrogram(mel_config).to(device)
-g2p = chinese_to_cnm3 if data_config.chinese else english_to_ipa2 # now we only support chinese and english
+
+g2p = g2p_mapping.get(data_config.language)
     
 def load_filelist(path) -> list:
     file_list = []
@@ -56,16 +64,19 @@ def process_filelist(line) -> str:
         # get output path
         audio_name, _ = os.path.splitext(os.path.basename(audio_path))
         
-        phone = g2p(text)
-        if len(phone) > 0:
-            mel = mel_extractor(audio.to(device)).cpu().squeeze(0) # shape: [n_mels, time // hop_length]
-            output_mel_path = os.path.join(output_mel_dir, f'{idx}_{audio_name}.pt')
-            torch.save(mel, output_mel_path)
-            
-            if data_config.resample:
-                audio_path = os.path.join(output_wav_dir, f'{idx}_{audio_name}.wav')
-                torchaudio.save(audio_path, audio.cpu(), mel_config.sample_rate)
-            return json.dumps({'mel_path': output_mel_path, 'phone': phone, 'audio_path': audio_path, 'text': text}, ensure_ascii=False, allow_nan=False)
+        try:
+            phone = g2p(text)
+            if len(phone) > 0:
+                mel = mel_extractor(audio.to(device)).cpu().squeeze(0) # shape: [n_mels, time // hop_length]
+                output_mel_path = os.path.join(output_mel_dir, f'{idx}_{audio_name}.pt')
+                torch.save(mel, output_mel_path)
+                
+                if data_config.resample:
+                    audio_path = os.path.join(output_wav_dir, f'{idx}_{audio_name}.wav')
+                    torchaudio.save(audio_path, audio.cpu(), mel_config.sample_rate)
+                return json.dumps({'mel_path': output_mel_path, 'phone': phone, 'audio_path': audio_path, 'text': text}, ensure_ascii=False, allow_nan=False)
+        except Exception as e:
+            print(f'Error processing {audio_path}: {str(e)}')
             
 
 def main():
