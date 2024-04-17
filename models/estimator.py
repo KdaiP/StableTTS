@@ -11,16 +11,10 @@ class DitWrapper(nn.Module):
     def __init__(self, hidden_channels, filter_channels, num_heads, kernel_size=3, p_dropout=0.1, gin_channels=0, time_channels=0):
         super().__init__()
         self.time_fusion = FiLMLayer(hidden_channels, time_channels)
-        self.conv1 = ConvNeXtBlock(hidden_channels, filter_channels, gin_channels)
-        self.conv2 = ConvNeXtBlock(hidden_channels, filter_channels, gin_channels)
-        self.conv3 = ConvNeXtBlock(hidden_channels, filter_channels, gin_channels)
-        self.block = DiTConVBlock(hidden_channels, hidden_channels, num_heads, kernel_size, p_dropout, gin_channels)
+        self.block = DiTConVBlock(hidden_channels, filter_channels, num_heads, kernel_size, p_dropout, gin_channels)
             
     def forward(self, x, c, t, x_mask):
         x = self.time_fusion(x, t) * x_mask
-        x = self.conv1(x, c, x_mask)
-        x = self.conv2(x, c, x_mask)
-        x = self.conv3(x, c, x_mask)
         x = self.block(x, c, x_mask)
         return x
 

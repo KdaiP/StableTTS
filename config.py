@@ -22,14 +22,14 @@ class MelConfig:
             
 @dataclass
 class ModelConfig:
-    hidden_channels: int = 192
-    filter_channels: int = 512
-    n_heads: int = 2
-    n_enc_layers: int = 3 
-    n_dec_layers: int = 2 
-    kernel_size: int = 3
+    hidden_channels: int = 256
+    filter_channels: int = 1024
+    n_heads: int = 4
+    n_enc_layers: int = 6 
+    n_dec_layers: int = 6
+    kernel_size: int = 9
     p_dropout: int = 0.1
-    gin_channels: int = 192
+    gin_channels: int = 256
             
 @dataclass
 class TrainConfig:
