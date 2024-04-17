@@ -24,7 +24,7 @@ We provide pretrained models ready for inference, finetuning and webui. Simply d
 | StableTTS | text to mel | 100h chinese | [🤗](https://huggingface.co/KdaiP/StableTTS/blob/main/checkpoint-zh_0.pt)|
 | Vocos | mel to wav | 2k english + chinese + japanese | [🤗](https://huggingface.co/KdaiP/StableTTS/blob/main/vocoder.pt)|
 
-**Better pretrained models and multilingual models will comming soon...**
+**Larger models, better pretrained models and multilingual models will comming soon...**
 
 ## Installation
 
@@ -50,11 +50,11 @@ Training your models with StableTTS is designed to be straightforward and effici
 
 ### Preparing Your Data
 
-Note: Since we use `reference encoder` to capture speaker identity when training, there is no need for a speaker ID in multispeaker synthesis and training.
-
 1. **Generate Text and Audio pairs**: Generate the text and audio pair filelist as `./filelists/example.txt`. Some recipes of open-source datasets could be found in `./recipes`.
 
-2. **Run Preprocessing**: Adjust the `DataConfig` in `preprocess.py` to set your input and output paths, then run the script. This will process the audio and text according to your list, outputting a JSON file with paths to mel features and phonemes. **Note: Ensure to switch `chinese=False` in `DataConfig` for English text processing.**
+2. **Run Preprocessing**: Adjust the `DataConfig` in `preprocess.py` to set your input and output paths, then run the script. This will process the audio and text according to your list, outputting a JSON file with paths to mel features and phonemes. **Note: Ensure to change `language = 'chinese'` in `DataConfig` for English or Japanese text processing.**
+
+Note: Since we use `reference encoder` to capture speaker identity when training, there is no need for a speaker ID in multispeaker synthesis and training.
 
 ### Start training
 
@@ -115,7 +115,7 @@ The development of our models heavily relies on insights and code from various p
 
 - [ ] Release pretrained models.
 - [ ] Provide detailed finetuning instructions.
-- [ ] Support Japanese language.
+- [x] Support Japanese language.
 - [ ] User friendly preprocess and inference script.
 - [ ] Enhance documentation and citations.
 - [ ] Add chinese version of readme.

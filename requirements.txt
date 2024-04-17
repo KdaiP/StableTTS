@@ -12,3 +12,5 @@ pyopenjtalk-prebuilt
 numba
 tqdm
 IPython
+gradio
+soundfile
