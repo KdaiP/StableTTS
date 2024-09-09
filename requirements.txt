@@ -1,16 +1,33 @@
 torch
 torchaudio
-matplotlib
+
+tqdm
 numpy
+soundfile # to make sure that torchaudio has at least one valid backend
+
 tensorboard
+
+# for monotonic_align
+numba
+
+# ODE-solver
+torchdiffeq 
+
+# for g2p
+# chinese
 pypinyin
 jieba
+# english
 eng_to_ipa
 unidecode
 inflect
-pyopenjtalk-prebuilt
-numba
-tqdm
-IPython
-gradio
-soundfile
+# japanese
+# if pyopenjtalk fail to download open_jtalk_dic_utf_8-1.11.tar.gz, manually download and unzip the file below 
+# https://github.com/r9y9/open_jtalk/releases/download/v1.11.1/open_jtalk_dic_utf_8-1.11.tar.gz
+# and set os.environ['OPEN_JTALK_DICT_DIR'] to the folder path
+pyopenjtalk-prebuilt # if using python >= 3.12, install pyopenjtalk instead
+
+# for webui
+# gradio
+# matplotlib
+

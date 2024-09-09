@@ -1,7 +1,4 @@
 import re
-import string
-import numpy as np
-from .langdetect import detect, LangDetectException
 
 from text.english import english_to_ipa2
 from text.mandarin import chinese_to_cnm3
@@ -28,18 +25,6 @@ def detect_language(text: str, prev_lang=None):
     if JP_PATTERN.search(text): return 'JA'
     if text.isspace(): return prev_lang  # 若是空格，则返回前一个语言
     return None
-
-def replace_substring(s, start_index, end_index, replacement):
-    return s[:start_index] + replacement + s[end_index:]
-
-def replace_sublist(lst, start_index, end_index, replacement_list):
-    lst[start_index:end_index] = replacement_list
-
-# convert text to ipa and prepare for language embedding
-def append_tags_and_convert(match, conversion_func, tag_value, tags):
-    converted_text = conversion_func(match.group(1))
-    tags.extend([tag_value] * len(converted_text))
-    return converted_text + ' '
 
 # auto detect language using re
 def cjke_cleaners4(text: str):

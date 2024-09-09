@@ -1,7 +1,8 @@
 import re
+from warnings import warn
 from typing import Union
 
-#from proces import preprocess
+# from proces import preprocess
 
 from .an2cn import An2Cn
 from .conf import NUMBER_CN2AN, UNIT_CN2AN, STRICT_CN_NUMBER, NORMAL_CN_NUMBER, NUMBER_LOW_AN2CN, UNIT_LOW_AN2CN
@@ -270,7 +271,7 @@ class Cn2An(object):
         len_decimal_data = len(decimal_data)
 
         if len_decimal_data > 16:
-            print(f"注意：小数部分长度为 {len_decimal_data} ，将自动截取前 16 位有效精度！")
+            warn(f"注意：小数部分长度为 {len_decimal_data} ，将自动截取前 16 位有效精度！")
             decimal_data = decimal_data[:16]
             len_decimal_data = 16
 

@@ -11,7 +11,7 @@ def continue_training(checkpoint_path, model: DDP, optimizer: optim.Optimizer) -
     
     # globt all the checkpoints in the directory
     for file in os.listdir(checkpoint_path):
-        if file.endswith(".pt"):
+        if file.endswith(".pt") and '_' in file:
             name, epoch_str = file.rsplit('_', 1)
             epoch = int(epoch_str.split('.')[0])
             

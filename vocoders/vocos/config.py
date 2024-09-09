@@ -19,32 +19,23 @@ class MelConfig:
             self.pad = (self.n_fft - self.hop_length) // 2
             
 @dataclass
-class ModelConfig:
-    hidden_channels: int = 256
-    filter_channels: int = 1024
-    n_heads: int = 4
-    n_enc_layers: int = 3 
-    n_dec_layers: int = 6 
-    kernel_size: int = 3
-    p_dropout: int = 0.1
-    gin_channels: int = 256
+class VocosConfig:
+    input_channels: int = 128
+    dim: int = 768
+    intermediate_dim: int = 2048
+    num_layers: int = 12
             
 @dataclass
 class TrainConfig:
-    train_dataset_path: str = 'filelists/filelist.json'
-    test_dataset_path: str = 'filelists/filelist.json' # not used
+    train_dataset_path: str = './filelists/filelist.txt'
+    test_dataset_path: str = './filelists/filelist.txt'
     batch_size: int = 32
     learning_rate: float = 1e-4
     num_epochs: int = 10000
     model_save_path: str = './checkpoints'
     log_dir: str = './runs'
-    log_interval: int = 16
-    save_interval: int = 1
+    log_interval: int = 64
     warmup_steps: int = 200
     
-@dataclass
-class VocosConfig:
-    input_channels: int = 128
-    dim: int = 512
-    intermediate_dim: int = 1536
-    num_layers: int = 8
+    segment_size = 20480
+    mel_loss_factor = 15

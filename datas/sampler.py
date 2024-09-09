@@ -39,6 +39,7 @@ class DistributedBucketSampler(torch.utils.data.distributed.DistributedSampler):
 
         # from https://github.com/Plachtaa/VITS-fast-fine-tuning/blob/main/data_utils.py
         # avoid "integer division or modulo by zero" error for very small dataset
+        # see https://github.com/Plachtaa/VITS-fast-fine-tuning/pull/228 for more details
         try: 
             for i in range(len(buckets) - 1, 0, -1):
                 if len(buckets[i]) == 0:

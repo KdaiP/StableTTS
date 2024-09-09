@@ -2,30 +2,29 @@ import os
 # os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
 
 import torch
-import torch.nn as nn
 import torch.optim as optim
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from dataclasses import asdict
 from tqdm import tqdm
+from dataclasses import asdict
 
-from models.model import StableTTS
 from datas.dataset import StableDataset, collate_fn
 from datas.sampler import DistributedBucketSampler
 from text import symbols
 from config import MelConfig, ModelConfig, TrainConfig
+from models.model import StableTTS
+
 from utils.scheduler import get_cosine_schedule_with_warmup
 from utils.load import continue_training
-from utils.plot import plot_alignment_to_numpy
 
 torch.backends.cudnn.benchmark = True
     
 def setup(rank, world_size):
     os.environ['MASTER_ADDR'] = 'localhost'
-    os.environ['MASTER_PORT'] = '12356'
+    os.environ['MASTER_PORT'] = '12345'
     dist.init_process_group("gloo" if os.name == "nt" else "nccl", rank=rank, world_size=world_size)
 
 def cleanup():
@@ -74,9 +73,9 @@ def train(rank, world_size):
             
         for batch_idx, datas in enumerate(dataloader):
             datas = [data.to(rank, non_blocking=True) for data in datas]
-            x, x_lengths, y, y_lengths = datas
+            x, x_lengths, y, y_lengths, z, z_lengths = datas
             optimizer.zero_grad()
-            dur_loss, diff_loss, prior_loss, attn = model(x, x_lengths, y, y_lengths)
+            dur_loss, diff_loss, prior_loss, _ = model(x, x_lengths, y, y_lengths, z, z_lengths)
             loss = dur_loss + diff_loss + prior_loss
             loss.backward()
             optimizer.step()
@@ -88,7 +87,6 @@ def train(rank, world_size):
                 writer.add_scalar("training/dur_loss", dur_loss.item(), steps)
                 writer.add_scalar("training/prior_loss", prior_loss.item(), steps)
                 writer.add_scalar("learning_rate/learning_rate", scheduler.get_last_lr()[0], steps)
-                # writer.add_image("training/attention", plot_alignment_to_numpy(attn[0,0].data.cpu().numpy()), steps, dataformats='HWC')
             
         if rank == 0 and epoch % train_config.save_interval == 0:
             torch.save(model.module.state_dict(), os.path.join(train_config.model_save_path, f'checkpoint_{epoch}.pt'))
