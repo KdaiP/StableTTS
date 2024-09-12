@@ -133,6 +133,8 @@ The development of our models heavily relies on insights and code from various p
 
 [coqui xtts](https://huggingface.co/spaces/coqui/xtts): gradio webui
 
+Chinese Dirtionary Of DiffSinger: [Multi-langs_Dictionary](https://github.com/colstone/Multi-langs_Dictionary) and [atonyxu's fork](https://github.com/atonyxu/Multi-langs_Dictionary)
+
 ## TODO
 
 - [x] Release pretrained models.
