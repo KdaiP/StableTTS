@@ -14,7 +14,7 @@ import torchaudio
 class DataConfig:
     dataset_path = './raw_datasets/VCTK'
     output_filelist_path = './filelists/VCTK.txt'
-    output_audio_path = '/data/lxn/raw_datasets/VCTK_audios' # to extract audios from parquet files
+    output_audio_path = './raw_datasets/VCTK_audios' # to extract audios from parquet files
 
 data_config = DataConfig()
     
