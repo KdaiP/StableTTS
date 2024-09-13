@@ -43,7 +43,7 @@ os.makedirs('./runs', exist_ok=True)
 os.makedirs('./stableTTS_datasets', exist_ok=True)
 os.makedirs("./checkpoints/pretrain", exist_ok=True)
 
-model = None		
+model_stable_tts = None		
 training_process = None    
 tenserboard_process = None    
 
@@ -214,7 +214,7 @@ def get_config_data(project_name):
     if os.path.isfile(config_file_json)==False:return 16,0.0001,200,16,1,200
     data=load_config(config_file_json) 
 
-    return data["batch_size"],data["learning_rate"],data["num_epochs"],data["log_interval"],data["save_interval"],data["warmup_steps"]
+    return data["batch_size"],data["learning_rate"],data["num_epochs"]-1,data["log_interval"],data["save_interval"],data["warmup_steps"]
 
 def create_training_config(config_file,config_file_json,
         train_dataset_path: str = 'filelists/petta/filelist.json',
@@ -299,7 +299,7 @@ class VocosConfig:
 
     save_config(config,config_file_json)
 
-def train_model(train_dataset_path: str, batch_size:int, learning_rate:float, num_epochs:int, model_save_path:str, log_dir:str, log_interval:str, save_interval:int, warmup_steps:int, use_finetune:bool, finetune_model:str = r"./pretrain/checkpoint_0.pt"):
+def train_model(train_dataset_path: str, batch_size:int, learning_rate:float, num_epochs:int, model_save_path:str, log_dir:str, log_interval:str, save_interval:int, warmup_steps:int, use_finetune:bool, pretrain_model:str = r"./checkpoints/pretrain/checkpoint_0.pt"):
     config_dir = os.path.dirname(train_dataset_path)
     config_file = os.path.join(config_dir, "config.py")
     config_file_json = os.path.join(config_dir, "config.json")
@@ -313,7 +313,7 @@ def train_model(train_dataset_path: str, batch_size:int, learning_rate:float, nu
        os.makedirs(model_save_path, exist_ok=True)
        finetune_model = os.path.join(model_save_path, "checkpoint_0.pt")
        if not os.path.isfile(finetune_model):
-          shutil.copy(pretrained_model_path, finetune_model)
+          shutil.copy(pretrain_model, finetune_model)
 
     yield "Training started !",gr.update(interactive=False),gr.update(interactive=True)
 
@@ -322,9 +322,9 @@ def train_model(train_dataset_path: str, batch_size:int, learning_rate:float, nu
     yield "Training finish !",gr.update(interactive=True),gr.update(interactive=False)
 
 def clear_model():
-    global model
-    if model is not None:
-       del model
+    global model_stable_tts
+    if model_stable_tts is not None:
+       del model_stable_tts
        gc.collect()
        torch.cuda.empty_cache()    
 
@@ -390,11 +390,15 @@ def refresh_dropdown_tensorboard(name):
 
 # interface
 def update_model(tts_model_path:str, vocoder_model_path:str, vocoder_type:str):
-    global model
+    global model_stable_tts
     global current_model
     if current_model != tts_model_path:
-       model = StableTTSAPI(tts_model_path, vocoder_model_path, vocoder_type).to(device)
-       print("model change")
+       model_stable_tts = StableTTSAPI(tts_model_path, vocoder_model_path, vocoder_type).to(device)
+
+# Function to extract the number from the file name
+def get_checkpoint_number(filename):
+    match = re.search(r'(\d+)', filename) 
+    return int(match.group()) if match else -1
 
 def get_checkpoints(folder: str) -> Tuple[List[str], str]:
 
@@ -404,7 +408,7 @@ def get_checkpoints(folder: str) -> Tuple[List[str], str]:
     checkpoints_path = os.path.join('checkpoints', folder, "*.pt")
     checkpoints = glob(checkpoints_path) 
     checkpoint_names = [os.path.basename(item) for item in checkpoints if 'checkpoint' in os.path.basename(item)]   
-    checkpoint_names.sort()
+    checkpoint_names = sorted(checkpoint_names, key=get_checkpoint_number)
     
     if checkpoint_names:
         return checkpoint_names, checkpoint_names[0]
@@ -426,13 +430,13 @@ def generate_speech(text, ref_audio, language, step, temperature, length_scale, 
     if language == 'chinese':
         text = text.replace(' ', '')
         
-    audio, mel = model.inference(text, ref_audio, language, step, temperature, length_scale, solver, cfg)
+    audio, mel = model_stable_tts.inference(text, ref_audio, language, step, temperature, length_scale, solver, cfg)
     
     max_val = torch.max(torch.abs(audio))
     if max_val > 1:
         audio = audio / max_val
     
-    audio_output = (model.mel_config.sample_rate, (audio.cpu().squeeze(0).numpy() * 32767).astype(np.int16))
+    audio_output = (model_stable_tts.mel_config.sample_rate, (audio.cpu().squeeze(0).numpy() * 32767).astype(np.int16))
     mel_output = plot_mel_spectrogram(mel.cpu().squeeze(0).numpy())
     
     return audio_output, mel_output
@@ -478,13 +482,13 @@ def generate_tts(folder, checkpoint, text, ref_audio, language, step, temperatur
     if language == 'chinese':
         text = text.replace(' ', '')
         
-    audio, mel = model.inference(text, ref_audio, language, step, temperature, length_scale, solver, cfg)
+    audio, mel = model_stable_tts.inference(text, ref_audio, language, step, temperature, length_scale, solver, cfg)
     
     max_val = torch.max(torch.abs(audio))
     if max_val > 1:
         audio = audio / max_val
     
-    audio_output = (model.mel_config.sample_rate, (audio.cpu().squeeze(0).numpy() * 32767).astype(np.int16))
+    audio_output = (model_stable_tts.mel_config.sample_rate, (audio.cpu().squeeze(0).numpy() * 32767).astype(np.int16))
     mel_output = plot_mel_spectrogram(mel.cpu().squeeze(0).numpy())
     
     return audio_output, mel_output , seed
@@ -533,7 +537,7 @@ def random_sample(nameproject):
 
     if os.path.isfile(filelist_file)==False:return "",None
     
-    with open(filelist_file, 'r') as file:
+    with open(filelist_file, 'r',encoding='utf-8') as file:
          data = [json.loads(line) for line in file]
 
     entry = random.choice(data)
@@ -702,11 +706,11 @@ def create_interface():
                             with gr.Row():
                                 model_project_dropdown = gr.Dropdown(choices=initial_projects, value=initial_project, label="Project", interactive=True,allow_custom_value=True)
                                 model_checkpoint_dropdown = gr.Dropdown(choices=initial_checkpoints, value=initial_checkpoint, label="Checkpoint", interactive=True,allow_custom_value=True)
-
-                            refresh_model_btn = gr.Button("Refresh Projects")             
+                                refresh_model_btn = gr.Button("Refresh Projects")             
                             
                             random_model_btn = gr.Button("Random Sample")
                             
+  
                             input_text = gr.Textbox(
                                 label="Input Text",
                                 info="Enter your text here",
@@ -717,48 +721,60 @@ def create_interface():
                                 type="filepath"
                             )
 
-              
-                            language_dropdown = gr.Dropdown(
-                                label='Language',
-                                choices=supported_languages,
-                                value='english'
-                            )
                             
-                            step_slider = gr.Slider(
-                                label='Step',
-                                minimum=1,
-                                maximum=100,
-                                value=25,
-                                step=1
-                            )
+                            generated_audio = gr.Audio(label="Generated Audio", autoplay=True)
+
+                     
+
+                        with gr.Column():
+  
+                            with gr.Row():
+                                 
+                                 language_dropdown = gr.Dropdown(
+                                     label='Language',
+                                     choices=supported_languages,
+                                     value='english'
+                                 )
+   
+                                 solver_dropdown = gr.Dropdown(
+                                     label='ODE Solver',
+                                     choices=['euler', 'midpoint', 'dopri5', 'rk4', 'implicit_adams', 'bosh3', 'fehlberg2', 'adaptive_heun'],
+                                     value='dopri5'
+                                 )
+
+                    
+                            with gr.Row():
+                                 step_slider = gr.Slider(
+                                     label='Step',
+                                     minimum=1,
+                                     maximum=100,
+                                     value=25,
+                                     step=1
+                                 )
+                                 
+                                 temperature_slider = gr.Slider(
+                                     label='Temperature',
+                                     minimum=0,
+                                     maximum=2,
+                                     value=1,
+                                 )
+
+                            with gr.Row():                      
+                                 length_scale_slider = gr.Slider(
+                                     label='Length Scale',
+                                     minimum=0,
+                                     maximum=5,
+                                     value=1,
+                                 )
                             
-                            temperature_slider = gr.Slider(
-                                label='Temperature',
-                                minimum=0,
-                                maximum=2,
-                                value=1,
-                            )
+                                 cfg_slider = gr.Slider(
+                                     label='CFG',
+                                     minimum=0,
+                                     maximum=10,
+                                     value=3,
+                                 )
                             
-                            length_scale_slider = gr.Slider(
-                                label='Length Scale',
-                                minimum=0,
-                                maximum=5,
-                                value=1,
-                            )
-                            
-                            solver_dropdown = gr.Dropdown(
-                                label='ODE Solver',
-                                choices=['euler', 'midpoint', 'dopri5', 'rk4', 'implicit_adams', 'bosh3', 'fehlberg2', 'adaptive_heun'],
-                                value='dopri5'
-                            )
-                            
-                            cfg_slider = gr.Slider(
-                                label='CFG',
-                                minimum=0,
-                                maximum=10,
-                                value=3,
-                            )
-                            
+
                             with gr.Row():
                                  
                                  seed_bool = gr.Checkbox(
@@ -775,11 +791,9 @@ def create_interface():
                                      interactive=True
                                  )
 
-                            
-                        with gr.Column():
-                            mel_plot = gr.Plot(label="Mel Spectrogram Visualization")
-                            generated_audio = gr.Audio(label="Generated Audio", autoplay=True)
+
                             generate_btn = gr.Button("Generate", elem_id="send-btn", visible=True, variant="primary")
+                            mel_plot = gr.Plot(label="Mel Spectrogram Visualization")
             
                         refresh_model_btn.click(fn=refresh_projects, outputs=[model_project_dropdown, model_project_dropdown])  
                         refresh_model_btn.click(fn=get_checkpoints, inputs=[model_project_dropdown], outputs=[model_checkpoint_dropdown, model_checkpoint_dropdown])  
