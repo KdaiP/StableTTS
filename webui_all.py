@@ -248,6 +248,7 @@ def preprocess_audio_files(input_file_list: str, output_feature_dir: str, output
     path = Path(input_file_list)
     directory_name = path.parent.name
     directory_name = os.path.join("checkpoints",directory_name,"speakers")
+    os.makedirs(directory_name,exist_ok=True)
 
     if copy_speaker:
        copy_speakers(output_file_list, directory_name, num_files=3)
