@@ -390,7 +390,8 @@ def clear_model():
        del model_stable_tts
        gc.collect()
        torch.cuda.empty_cache()    
-
+       model_stable_tts=None 
+       
 def start_training():   
     global training_process
     if training_process is not None:return f"Train run already!"
@@ -417,7 +418,7 @@ def refresh_train_stage(project_name):
     if project_name is not None:
        config_dir = os.path.join(r'./filelists',project_name)
        config_file_json = os.path.join(config_dir, "config.json")
-       value = button_enable() if os.path.isfile(config_file_json)  else button_disable()
+       value = button_disable() if os.path.isfile(config_file_json)  else button_enable()
     else:
        value = button_enable()
     return bt_train,value,value
