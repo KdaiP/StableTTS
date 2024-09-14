@@ -16,10 +16,12 @@ import shutil
 import sys
 import requests
 import torch,gc
+import wave
+
 from glob import glob
 
 import gradio as gr
-
+from pathlib import Path
 #get function for repo
 from utils.audio import LogMelSpectrogram, load_and_resample_audio
 from preprocess import g2p_mapping,load_filelist
@@ -119,6 +121,41 @@ def terminate_process(pid):
         terminate_process_tree(pid)
 
 #preprocess 
+def copy_speakers(input_file_list, destination_dir, num_files=3):
+
+    if not os.path.exists(destination_dir):
+        os.makedirs(destination_dir)
+    else:
+        return    
+
+    if os.path.isfile(input_file_list)==False:return 
+    
+    with open(input_file_list, 'r',encoding='utf-8') as file:
+         data = [json.loads(line) for line in file]
+    
+    wav_files=[]
+    for item in data:
+        wav_files.append(item["audio_path"])
+
+    if not wav_files:
+        return 
+    
+    file_durations = []
+    
+    for wav_file in wav_files:
+        with wave.open(wav_file, 'r') as wav_obj:
+            frames = wav_obj.getnframes()
+            rate = wav_obj.getframerate()
+            duration = frames / float(rate)
+            file_durations.append((wav_file, duration))
+    
+    file_durations.sort(key=lambda x: x[1], reverse=True)
+    
+    longest_files = [file for file, _ in file_durations[:num_files]]
+    
+    for wav_file in longest_files:
+        shutil.copyfile(wav_file, os.path.join(destination_dir, os.path.basename(wav_file)))
+    
 def create_project(project_name: str):
     os.makedirs(f'./filelists/{project_name}', exist_ok=True)
     input_file_list = f'./filelists/{project_name}/filelist.txt'
@@ -145,7 +182,17 @@ def refresh_projects() -> Tuple[List[str], str]:
     first_project = projects[0] if projects else None
     return projects, first_project
 
-def preprocess_audio_files(input_file_list: str, output_feature_dir: str, output_file_list: str, language: str, should_resample:bool, progress=gr.Progress()):
+def export_language_value(file_path,language_value):
+    with open(file_path, 'w', encoding='utf-8') as file:
+        json.dump({"language":language_value}, file, ensure_ascii=False, indent=4)
+
+def import_language_value(file_path):
+    if os.path.isfile(file_path)==False:return "chinese"
+    with open(file_path, 'r', encoding='utf-8') as file:
+        data = json.load(file)
+    return data["language"]
+
+def preprocess_audio_files(input_file_list: str, output_feature_dir: str, output_file_list: str, language: str, should_resample:bool,copy_speaker:bool, progress=gr.Progress()):
     
     if not os.path.isfile(input_file_list):
         return f"No such file or directory: '{input_file_list}'"
@@ -163,6 +210,8 @@ def preprocess_audio_files(input_file_list: str, output_feature_dir: str, output
        output_wav_dir = os.path.join(output_feature_dir, 'waves')
        os.makedirs(output_wav_dir, exist_ok=True)
     
+
+
     @torch.inference_mode()
     def process_audio_file(line) -> str:
         idx, audio_path, text = line
@@ -183,21 +232,32 @@ def preprocess_audio_files(input_file_list: str, output_feature_dir: str, output
                     return json.dumps({'mel_path': output_mel_path, 'phone': phonemes, 'audio_path': audio_path, 'text': text, 'mel_length': mel.size(-1)}, ensure_ascii=False, allow_nan=False)
             except Exception as e:
                 print(f'Error processing {audio_path}: {str(e)}')
-            
-    input_file_list = load_filelist(input_file_list)
+     
+    input_file_list_data = load_filelist(input_file_list)
     processed_files = []
 
-    for i, line in enumerate(progress.tqdm(input_file_list, desc="Processing files")):
+    for i, line in enumerate(progress.tqdm(input_file_list_data, desc="Processing files")):
         result = process_audio_file(line)
         if result:
            processed_files.append(f'{result}\n')
   
     with open(output_file_list, 'w', encoding='utf-8') as f:
         f.writelines(processed_files)
+        
+
+    path = Path(input_file_list)
+    directory_name = path.parent.name
+    directory_name = os.path.join("checkpoints",directory_name,"speakers")
+
+    if copy_speaker:
+       copy_speakers(output_file_list, directory_name, num_files=3)
+
+    export_language_value(os.path.join(directory_name,"lag.json"),language)
     
     return f"File list has been saved to {output_file_list}"
 
 # train
+
 def save_config(config, file_path):
     with open(file_path, 'w') as file:
         json.dump(config, file, indent=4)
@@ -209,6 +269,7 @@ def load_config(file_path):
     return config
 
 def get_config_data(project_name):
+    if project_name is None:return 16,0.0001,200,16,1,200
     config_dir = os.path.join(r'./filelists',project_name)
     config_file_json = os.path.join(config_dir, "config.json")
     if os.path.isfile(config_file_json)==False:return 16,0.0001,200,16,1,200
@@ -217,8 +278,8 @@ def get_config_data(project_name):
     return data["batch_size"],data["learning_rate"],data["num_epochs"]-1,data["log_interval"],data["save_interval"],data["warmup_steps"]
 
 def create_training_config(config_file,config_file_json,
-        train_dataset_path: str = 'filelists/petta/filelist.json',
-        test_dataset_path: str = 'filelists/ben/filelist.json', 
+        train_dataset_path: str = 'filelists/filelist.json',
+        test_dataset_path: str = 'filelists/filelist.json', 
         batch_size: int = 32,
         learning_rate: float = 1e-4,
         num_epochs: int = 10000,
@@ -228,7 +289,7 @@ def create_training_config(config_file,config_file_json,
         save_interval: int = 1,
         warmup_steps: int = 200,
     ):
-    
+
     config_content = f"""
 from dataclasses import dataclass
 
@@ -300,6 +361,7 @@ class VocosConfig:
     save_config(config,config_file_json)
 
 def train_model(train_dataset_path: str, batch_size:int, learning_rate:float, num_epochs:int, model_save_path:str, log_dir:str, log_interval:str, save_interval:int, warmup_steps:int, use_finetune:bool, pretrain_model:str = r"./checkpoints/pretrain/checkpoint_0.pt"):
+
     config_dir = os.path.dirname(train_dataset_path)
     config_file = os.path.join(config_dir, "config.py")
     config_file_json = os.path.join(config_dir, "config.json")
@@ -314,7 +376,7 @@ def train_model(train_dataset_path: str, batch_size:int, learning_rate:float, nu
        finetune_model = os.path.join(model_save_path, "checkpoint_0.pt")
        if not os.path.isfile(finetune_model):
           shutil.copy(pretrain_model, finetune_model)
-
+    
     yield "Training started !",gr.update(interactive=False),gr.update(interactive=True)
 
     clear_model()
@@ -346,7 +408,18 @@ def stop_training():
 
 def refresh_dropdown_train():
     names,select=refresh_projects()
+    if select=="":select=None
     return gr.Dropdown(choices=names,value=select, label="Project")
+
+def refresh_train_stage(project_name):
+    bt_train = button_disable() if project_name is None else button_enable()
+    if project_name is not None:
+       config_dir = os.path.join(r'./filelists',project_name)
+       config_file_json = os.path.join(config_dir, "config.json")
+       value = button_enable() if os.path.isfile(config_file_json)  else button_disable()
+    else:
+       value = button_enable()
+    return bt_train,value,value
 
 # tensorboard
 def start_tensorboard(log_dir: str, port: int = 6006):
@@ -378,14 +451,21 @@ def get_tensorboard_projects(folder_path=r'./runs') -> List[str]:
 
 def refresh_tensorboard_projects() -> Tuple[List[str], str]:
     projects = get_tensorboard_projects()
-    first_project = projects[0] if projects else None
+    first_project = projects[0] if projects else ""
     return projects, first_project
 
+def refresh_tensorboard_stage():
+    projects = get_tensorboard_projects()
+    if projects==[]:return button_disable(),button_disable(),button_disable()
+    return button_enable(),button_disable(),button_disable()
+
 def get_tensorboard_log_dir(project_name="", folder_path=r'./runs') -> str:
+    if project_name is None:project_name=""
     return f"{folder_path}/{project_name}"
 
 def refresh_dropdown_tensorboard(name):
     names,select=refresh_tensorboard_projects()
+    if select=="":select=None
     return gr.Dropdown(choices=names,value=select, label="Project")
 
 # interface
@@ -415,9 +495,38 @@ def get_checkpoints(folder: str) -> Tuple[List[str], str]:
     
     return [], ""
 
+def get_speakers(folder: str) -> Tuple[List[str], str]:
+    if not folder:return [], ""
+    speakes_path = os.path.join('checkpoints', folder,"speakers")
+    if os.path.isdir(speakes_path)==False:return [],""
+    speakers = glob(os.path.join(speakes_path, "*.wav")) 
+    speaker_names = [os.path.basename(item) for item in speakers]   
+
+    if speaker_names:
+        return speaker_names, speaker_names[0]
+    
+    return [], ""
+
+def refresh_dropdown_speakers(folder):
+    names,select=get_speakers(folder)
+    if select=="":select=None
+    return gr.Dropdown(choices=names,value=select, label="Speaker"),select
+
+def select_speaker(folder,filename):
+    if folder is None:return None
+    speakes_path = os.path.join('checkpoints', folder,"speakers")
+    if os.path.isdir(speakes_path)==False:return None
+    filewave=os.path.join(speakes_path,filename)
+    if os.path.isfile(filewave)==False:return None
+    return filewave
+
 def refresh_dropdown_checkpoints(folder):
+    lag="chinese"
+    if folder is None:return gr.Dropdown(choices=[],value=None, label="Checkpoint"),lag
+    file_lag=os.path.join('./checkpoints',folder,"speakers",'lag.json')
+    lag=import_language_value(file_lag)
     names,select=get_checkpoints(folder)
-    return gr.Dropdown(choices=names,value=select, label="Checkpoint")
+    return gr.Dropdown(choices=names,value=select, label="Checkpoint"),lag
 
 def refresh_dropdown():
     names,select=refresh_projects()
@@ -471,7 +580,9 @@ def set_seed(seed):
     return seed
 
 @torch.inference_mode()
-def generate_tts(folder, checkpoint, text, ref_audio, language, step, temperature, length_scale, solver, cfg,seed=-1,random=True):
+def generate_tts(folder, checkpoint, text, ref_audio, language, step, temperature, length_scale, solver, cfg,seed=0,random=True):
+    if folder is None or checkpoint is None or ref_audio is None: return None, None, seed
+
     if random:seed=-1
     seed = set_seed(seed)
   
@@ -533,6 +644,7 @@ def button_disable():
     return gr.update(interactive=False)
 
 def random_sample(nameproject):
+    if nameproject is None: return "",None
     filelist_file = os.path.join('filelists',nameproject, "filelist.json")
 
     if os.path.isfile(filelist_file)==False:return "",None
@@ -552,6 +664,7 @@ def create_interface():
     with gr.Blocks() as app:
         gui_title = 'StableTTS ALL IN ONE'
         gui_description = """Next-generation TTS model using flow-matching and DiT, inspired by Stable Diffusion 3."""
+        example_text = """你指尖跳动的电光，是我永恒不变的信仰。唯我超电磁炮永世长存！"""
         
         with gr.Row():
             with gr.Column():
@@ -570,23 +683,23 @@ def create_interface():
                     output_file_list = gr.Textbox(label="Output File List Path", value='./filelists/filelist.json',interactive=False)
                     output_feature_dir = gr.Textbox(label="Output Feature Directory", value='./stableTTS_datasets',interactive=False)
                     
-                language = gr.Dropdown(label="Language", choices=supported_languages, value="english")
+                language = gr.Dropdown(label="Language", choices=supported_languages, value="chinese")
 
                 resample_audio = gr.Checkbox(label="Resample Audio", value=False)
+                copy_speaker = gr.Checkbox(label="Copy 3 audio files for use as references.",value=True)
                 preprocess_output = gr.Textbox(label="Preprocess Output", lines=4)
                 
                 preprocess_btn = gr.Button("Preprocess Data",interactive=False)
 
                 preprocess_btn.click(
                     fn=preprocess_audio_files,
-                    inputs=[input_file_list, output_feature_dir, output_file_list, language, resample_audio],
+                    inputs=[input_file_list, output_feature_dir, output_file_list, language, resample_audio,copy_speaker],
                     outputs=preprocess_output
                 )
            
             create_project_btn.click(fn=create_project, inputs=[project_name], outputs=[input_file_list, output_file_list, output_feature_dir])
             create_project_btn.click(fn=button_enable, outputs=[preprocess_btn])
 
-     
             with gr.TabItem("Train Model"):
                 initial_projects = get_projects()
                 initial_project = initial_projects[0] if initial_projects else None
@@ -607,19 +720,19 @@ def create_interface():
                 
                 with gr.Row():
                     batch_size = gr.Slider(label="Batch Size", minimum=1, maximum=128, step=1, value=16)
-                    num_epochs = gr.Slider(label="Number of Epochs", minimum=1, maximum=10000, step=1, value=200)
+                    log_interval = gr.Slider(label="Log Interval", minimum=1, maximum=100, step=1, value=16) 
                     warmup_steps = gr.Slider(label="Warmup Steps", minimum=1, maximum=10000, step=1, value=200)
                 
-                with gr.Row():
-                    log_interval = gr.Slider(label="Log Interval", minimum=1, maximum=100, step=1, value=16)
-                    save_interval = gr.Slider(label="Save Interval", minimum=1, maximum=100, step=1, value=1)
+                with gr.Row():                 
+                    num_epochs = gr.Slider(label="Number of Epochs", minimum=1, maximum=10000, step=1, value=200)
+                    save_interval = gr.Slider(label="Save Interval", minimum=1, maximum=100, step=1, value=1)        
+                    learning_rate = gr.Number(label="Learning Rate", value=1e-4)
                 
-                learning_rate = gr.Number(label="Learning Rate", value=1e-4)
-                
-                pretrain_model_path = gr.Textbox(label="Pretrain Model Path", value=pretrained_model_path)
-        
-
-                use_finetune = gr.Checkbox(label="Use Finetune", value=True)     
+                with gr.Row():  
+                     use_finetune = gr.Checkbox(label="Use Finetune", value=True) 
+                     pretrain_model_path = gr.Textbox(label="Pretrain Model Path", value=pretrained_model_path,interactive=False)   
+                     use_finetune.change(enable_button_setting,inputs=[use_finetune],outputs=[pretrain_model_path])
+                         
 
                 train_output = gr.Textbox(label="Training Output", lines=4)
                 
@@ -629,31 +742,29 @@ def create_interface():
                     train_stop_model_btn = gr.Button("Stop Train",interactive=False)               
    
             refresh_projects_btn.click(fn=get_config_data,inputs=project_dropdown,outputs=[ batch_size, learning_rate,num_epochs,log_interval, save_interval, warmup_steps])
-            project_dropdown.change(fn=get_config_data, inputs=project_dropdown, outputs=[ batch_size, learning_rate,num_epochs,log_interval, save_interval, warmup_steps])
-
             refresh_projects_btn.click(fn=refresh_projects, outputs=[project_dropdown, project_dropdown])
+            refresh_projects_btn.click(fn=refresh_dropdown_train, outputs=[project_dropdown]) 
+   
+            project_dropdown.change(fn=get_config_data, inputs=project_dropdown, outputs=[ batch_size, learning_rate,num_epochs,log_interval, save_interval, warmup_steps])
             project_dropdown.change(fn=get_project_files, inputs=project_dropdown, outputs=[train_dataset_path, log_dir, model_save_path])
-            
-            refresh_projects_btn.click(fn=button_enable, outputs=[train_start_model_btn])
-            project_dropdown.change(fn=button_enable, outputs=[train_start_model_btn])
-             
+
+
+            refresh_projects_btn.click(fn=refresh_train_stage,inputs=[project_dropdown], outputs=[train_start_model_btn,pretrain_model_path,use_finetune])
+
+            train_stop_model_btn.click(fn=stop_training,outputs=[train_output,train_start_model_btn,train_stop_model_btn])
             train_start_model_btn.click(
                   fn=train_model,
                   inputs=[train_dataset_path, batch_size, learning_rate,num_epochs, model_save_path, log_dir, log_interval, save_interval, warmup_steps, use_finetune, pretrain_model_path],
                   outputs=[train_output,train_start_model_btn,train_stop_model_btn])
-           
-            train_stop_model_btn.click(fn=stop_training,outputs=[train_output,train_start_model_btn,train_stop_model_btn])
+                       
             
-            refresh_projects_btn.click(fn=refresh_dropdown_train, outputs=[project_dropdown]) 
-
             with gr.TabItem("Tensorboard"):
                 with gr.Row():
                     initial_tensorboard_projects = get_tensorboard_projects()
                     initial_tensorboard_project = initial_tensorboard_projects[0] if initial_tensorboard_projects else None
                     tensorboard_project_dropdown = gr.Dropdown(choices=initial_tensorboard_projects, value=initial_tensorboard_project, label="Project", interactive=True,allow_custom_value=True)
                     refresh_tensorboard_btn = gr.Button("Refresh Tensorboard")             
-                    refresh_tensorboard_btn.click(fn=refresh_tensorboard_projects, outputs=[tensorboard_project_dropdown, tensorboard_project_dropdown])
-
+         
                     if initial_tensorboard_project is not None:
                         log_value = get_tensorboard_log_dir(initial_tensorboard_project)
                     else:
@@ -661,8 +772,7 @@ def create_interface():
 
                 tensorboard_log_path = gr.Textbox(label="Tensorboard Log Directory", value=log_value,interactive=False)
 
-                tensorboard_project_dropdown.change(fn=get_tensorboard_log_dir, inputs=tensorboard_project_dropdown, outputs=[tensorboard_log_path])
-               
+
                 with gr.Row():    
                      port_tensorboard = gr.Number(label="Port",value=6006)
                      start_tensorboard_btn = gr.Button("Start TensorBoard",interactive=False)
@@ -687,13 +797,12 @@ def create_interface():
                     fn=launch_tensorboard,
                     inputs=[port_tensorboard],
                 )
-
-                refresh_tensorboard_btn.click(button_enable,outputs=start_tensorboard_btn)
-                refresh_tensorboard_btn.click(button_disable,outputs=stop_tensorboard_btn)
-                refresh_tensorboard_btn.click(button_disable,outputs=open_tensorboard_btn)
-
+                
+                refresh_tensorboard_btn.click(fn=refresh_tensorboard_projects, outputs=[tensorboard_project_dropdown, tensorboard_project_dropdown])
+                refresh_tensorboard_btn.click(fn=refresh_tensorboard_stage, outputs=[start_tensorboard_btn,stop_tensorboard_btn,open_tensorboard_btn])             
                 tensorboard_project_dropdown.change(fn=refresh_dropdown_tensorboard , outputs=[tensorboard_project_dropdown]) 
-
+                tensorboard_project_dropdown.change(fn=get_tensorboard_log_dir, inputs=tensorboard_project_dropdown, outputs=[tensorboard_log_path])
+               
 
             with gr.TabItem("Interface"):
                 with gr.Blocks(theme=gr.themes.Base()) as demo:
@@ -708,12 +817,16 @@ def create_interface():
                                 model_checkpoint_dropdown = gr.Dropdown(choices=initial_checkpoints, value=initial_checkpoint, label="Checkpoint", interactive=True,allow_custom_value=True)
                                 refresh_model_btn = gr.Button("Refresh Projects")             
                             
-                            random_model_btn = gr.Button("Random Sample")
-                            
-  
+                            initial_speakers, initial_speaker= get_speakers(initial_project)
+                            with gr.Row():
+                                 random_model_btn = gr.Button("Random Sample")
+                                 speaker_dropdown = gr.Dropdown(choices=initial_speakers, value=initial_speaker, label="Speaker", interactive=True,allow_custom_value=True)
+
+                        
                             input_text = gr.Textbox(
                                 label="Input Text",
                                 info="Enter your text here",
+                                value=example_text
                             )
                          
                             reference_audio = gr.Audio(
@@ -733,7 +846,7 @@ def create_interface():
                                  language_dropdown = gr.Dropdown(
                                      label='Language',
                                      choices=supported_languages,
-                                     value='english'
+                                     value='chinese'
                                  )
    
                                  solver_dropdown = gr.Dropdown(
@@ -796,11 +909,14 @@ def create_interface():
                             mel_plot = gr.Plot(label="Mel Spectrogram Visualization")
             
                         refresh_model_btn.click(fn=refresh_projects, outputs=[model_project_dropdown, model_project_dropdown])  
+                        refresh_model_btn.click(fn=refresh_dropdown_speakers, inputs=[model_project_dropdown],  outputs=[speaker_dropdown,speaker_dropdown])  
                         refresh_model_btn.click(fn=get_checkpoints, inputs=[model_project_dropdown], outputs=[model_checkpoint_dropdown, model_checkpoint_dropdown])  
-                        refresh_model_btn.click(fn=refresh_dropdown_checkpoints, inputs=[model_project_dropdown], outputs=[model_checkpoint_dropdown])  
+                        refresh_model_btn.click(fn=refresh_dropdown_checkpoints, inputs=[model_project_dropdown], outputs=[model_checkpoint_dropdown,language_dropdown])  
                         refresh_model_btn.click(fn=refresh_dropdown,  outputs=[model_project_dropdown])  
+                        
+                        speaker_dropdown.change(fn=select_speaker,inputs=[model_project_dropdown,speaker_dropdown],outputs=[reference_audio])
 
-                        model_project_dropdown.change(fn=refresh_dropdown_checkpoints, inputs=[model_project_dropdown], outputs=[model_checkpoint_dropdown]) 
+                        model_project_dropdown.change(fn=refresh_dropdown_checkpoints, inputs=[model_project_dropdown], outputs=[model_checkpoint_dropdown,language_dropdown]) 
                          
                         random_model_btn.click(fn=random_sample,inputs=[model_project_dropdown],outputs=[input_text,reference_audio])
  
@@ -809,8 +925,6 @@ def create_interface():
                     
                     seed_bool.change(fn=enable_button_setting,inputs=seed_bool,outputs=seed_value)
       
-
-
         footer = gr.HTML(f"""
          <footer style="text-align: center; padding: 10px; font-size: 14px; color: grey; border-top: 1px solid #eaeaea;">
              All set! The models are ready to go. Running on <strong>{device}</strong>.
