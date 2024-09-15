@@ -192,7 +192,7 @@ def import_language_value(file_path):
         data = json.load(file)
     return data["language"]
 
-def preprocess_audio_files(input_file_list: str, output_feature_dir: str, output_file_list: str, language: str, should_resample:bool,copy_speaker:bool, progress=gr.Progress()):
+def preprocess_audio_files(input_file_list: str, output_feature_dir: str, output_file_list: str, language: str, copy_speaker:bool, progress=gr.Progress()):
     
     if not os.path.isfile(input_file_list):
         return f"No such file or directory: '{input_file_list}'"
@@ -206,12 +206,6 @@ def preprocess_audio_files(input_file_list: str, output_feature_dir: str, output
     os.makedirs(output_mel_dir, exist_ok=True)
     os.makedirs(os.path.dirname(output_file_list), exist_ok=True)
     
-    if should_resample:
-       output_wav_dir = os.path.join(output_feature_dir, 'waves')
-       os.makedirs(output_wav_dir, exist_ok=True)
-    
-
-
     @torch.inference_mode()
     def process_audio_file(line) -> str:
         idx, audio_path, text = line
@@ -225,10 +219,7 @@ def preprocess_audio_files(input_file_list: str, output_feature_dir: str, output
                     mel = mel_extractor(audio.to(device)).cpu().squeeze(0)
                     output_mel_path = os.path.join(output_mel_dir, f'{idx}_{audio_name}.pt')
                     torch.save(mel, output_mel_path)
-                    
-                    if should_resample:
-                       audio_path = os.path.join(output_wav_dir, f'{idx}_{audio_name}.wav')
-                       torchaudio.save(audio_path, audio.cpu(), mel_config.sample_rate)
+
                     return json.dumps({'mel_path': output_mel_path, 'phone': phonemes, 'audio_path': audio_path, 'text': text, 'mel_length': mel.size(-1)}, ensure_ascii=False, allow_nan=False)
             except Exception as e:
                 print(f'Error processing {audio_path}: {str(e)}')
@@ -703,7 +694,6 @@ def create_interface():
                         
                     language = gr.Dropdown(label="Language", choices=supported_languages, value="chinese")
     
-                    resample_audio = gr.Checkbox(label="Resample Audio", value=False)
                     copy_speaker = gr.Checkbox(label="Copy 3 audio files for use as references.",value=True)
                     preprocess_output = gr.Textbox(label="Preprocess Output", lines=4)
                     
@@ -711,7 +701,7 @@ def create_interface():
     
                     preprocess_btn.click(
                         fn=preprocess_audio_files,
-                        inputs=[input_file_list, output_feature_dir, output_file_list, language, resample_audio,copy_speaker],
+                        inputs=[input_file_list, output_feature_dir, output_file_list, language,copy_speaker],
                         outputs=preprocess_output
                     )
                
