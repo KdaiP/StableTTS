@@ -431,7 +431,7 @@ def start_tensorboard(log_dir: str, port: int = 6006):
     try:
         cmd = f"tensorboard --logdir {log_dir} --port {port}"
         tenserboard_process = Popen(cmd, shell=True)
-        yield f"TensorBoard started. Open http://localhost:{port} to view. {cmd}",gr.update(interactive=False),gr.update(interactive=True),gr.update(interactive=True)
+        yield f"TensorBoard started. Open http://localhost:{port} to view.",gr.update(interactive=False),gr.update(interactive=True),gr.update(interactive=True)
         tenserboard_process.wait()
         
     except Exception as e:
@@ -673,6 +673,7 @@ def random_sample(nameproject):
 def enable_button_setting(value):
     return gr.update(interactive=value)
 
+
 def create_interface():
 
     with gr.Blocks() as app:
@@ -682,142 +683,143 @@ def create_interface():
         
         with gr.Row():
             with gr.Column():
-                gr.Markdown(f"# {gui_title}")
-                gr.Markdown(gui_description)
-     
+                 gr.Markdown(f"# {gui_title}")
+                 gr.Markdown(gui_description)
+
+
         with gr.Tabs():
-
-            with gr.TabItem("Preprocess Data"):
-                with gr.Row():
-                    project_name = gr.Textbox(label="Project Name", value='test')
-                    create_project_btn = gr.Button("Create")
-
-                with gr.Row():
-                    input_file_list = gr.Textbox(label="Input File List Path", value='./filelists/filelist.txt',interactive=False)
-                    output_file_list = gr.Textbox(label="Output File List Path", value='./filelists/filelist.json',interactive=False)
-                    output_feature_dir = gr.Textbox(label="Output Feature Directory", value='./stableTTS_datasets',interactive=False)
-                    
-                language = gr.Dropdown(label="Language", choices=supported_languages, value="chinese")
-
-                resample_audio = gr.Checkbox(label="Resample Audio", value=False)
-                copy_speaker = gr.Checkbox(label="Copy 3 audio files for use as references.",value=True)
-                preprocess_output = gr.Textbox(label="Preprocess Output", lines=4)
-                
-                preprocess_btn = gr.Button("Preprocess Data",interactive=False)
-
-                preprocess_btn.click(
-                    fn=preprocess_audio_files,
-                    inputs=[input_file_list, output_feature_dir, output_file_list, language, resample_audio,copy_speaker],
-                    outputs=preprocess_output
-                )
            
-            create_project_btn.click(fn=create_project, inputs=[project_name], outputs=[input_file_list, output_file_list, output_feature_dir])
-            create_project_btn.click(fn=button_enable, outputs=[preprocess_btn])
-
-            with gr.TabItem("Train Model"):
-                initial_projects = get_projects()
-                initial_project = initial_projects[0] if initial_projects else None
-
-                if initial_project is not None:
-                    train_value, log_value, model_value = get_project_files(initial_project)
-                else:
-                    train_value, log_value, model_value = './filelists/filelist.json', './runs', './checkpoints' 
-
-                with gr.Row():
-                    project_dropdown = gr.Dropdown(choices=initial_projects, value=initial_project, label="Project", interactive=True,allow_custom_value=True)
-                    refresh_projects_btn = gr.Button("Refresh Projects")             
-                    
-                with gr.Row():
-                    train_dataset_path = gr.Textbox(label="Train Dataset Path", value=train_value,interactive=False)
-                    log_dir = gr.Textbox(label="Log Directory", value=log_value,interactive=False)
-                    model_save_path = gr.Textbox(label="Model Save Path", value=model_value,interactive=False)
-                
-                with gr.Row():
-                    batch_size = gr.Slider(label="Batch Size", minimum=1, maximum=128, step=1, value=16)
-                    log_interval = gr.Slider(label="Log Interval", minimum=1, maximum=100, step=1, value=16) 
-                    warmup_steps = gr.Slider(label="Warmup Steps", minimum=1, maximum=10000, step=1, value=200)
-                
-                with gr.Row():                 
-                    num_epochs = gr.Slider(label="Number of Epochs", minimum=1, maximum=10000, step=1, value=200)
-                    save_interval = gr.Slider(label="Save Interval", minimum=1, maximum=100, step=1, value=1)        
-                    learning_rate = gr.Number(label="Learning Rate", value=1e-4)
-                
-                with gr.Row():  
-                     use_finetune = gr.Checkbox(label="Use Finetune", value=True) 
-                     pretrain_model_path = gr.Textbox(label="Pretrain Model Path", value=pretrained_model_path,interactive=False)   
-                     use_finetune.change(enable_button_setting,inputs=[use_finetune],outputs=[pretrain_model_path])
-                         
-
-                train_output = gr.Textbox(label="Training Output", lines=4)
-                
-                with gr.Row():
-
-                    train_start_model_btn = gr.Button("Start Train",interactive=False)
-                    train_stop_model_btn = gr.Button("Stop Train",interactive=False)               
-   
-            refresh_projects_btn.click(fn=get_config_data,inputs=project_dropdown,outputs=[ batch_size, learning_rate,num_epochs,log_interval, save_interval, warmup_steps])
-            refresh_projects_btn.click(fn=refresh_projects, outputs=[project_dropdown, project_dropdown])
-            refresh_projects_btn.click(fn=refresh_dropdown_train, outputs=[project_dropdown]) 
-   
-            project_dropdown.change(fn=get_config_data, inputs=project_dropdown, outputs=[ batch_size, learning_rate,num_epochs,log_interval, save_interval, warmup_steps])
-            project_dropdown.change(fn=get_project_files, inputs=project_dropdown, outputs=[train_dataset_path, log_dir, model_save_path])
-
-
-            refresh_projects_btn.click(fn=refresh_train_stage,inputs=[project_dropdown], outputs=[train_start_model_btn,pretrain_model_path,use_finetune])
-
-            train_stop_model_btn.click(fn=stop_training,outputs=[train_output,train_start_model_btn,train_stop_model_btn])
-            train_start_model_btn.click(
-                  fn=train_model,
-                  inputs=[train_dataset_path, batch_size, learning_rate,num_epochs, model_save_path, log_dir, log_interval, save_interval, warmup_steps, use_finetune, pretrain_model_path],
-                  outputs=[train_output,train_start_model_btn,train_stop_model_btn])
-                       
-            
-            with gr.TabItem("Tensorboard"):
-                with gr.Row():
-                    initial_tensorboard_projects = get_tensorboard_projects()
-                    initial_tensorboard_project = initial_tensorboard_projects[0] if initial_tensorboard_projects else None
-                    tensorboard_project_dropdown = gr.Dropdown(choices=initial_tensorboard_projects, value=initial_tensorboard_project, label="Project", interactive=True,allow_custom_value=True)
-                    refresh_tensorboard_btn = gr.Button("Refresh Tensorboard")             
-         
-                    if initial_tensorboard_project is not None:
-                        log_value = get_tensorboard_log_dir(initial_tensorboard_project)
-                    else:
-                        log_value = './runs'
-
-                tensorboard_log_path = gr.Textbox(label="Tensorboard Log Directory", value=log_value,interactive=False)
-
-
-                with gr.Row():    
-                     port_tensorboard = gr.Number(label="Port",value=6006)
-                     start_tensorboard_btn = gr.Button("Start TensorBoard",interactive=False)
-                     stop_tensorboard_btn = gr.Button("Stop TensorBoard",interactive=False)
-                     open_tensorboard_btn = gr.Button("Open TensorBoard",interactive=False)
-
+            with gr.TabItem("Train"):
+     
+                with gr.TabItem("Preprocess Data"):
+                    with gr.Row():
+                        project_name = gr.Textbox(label="Project Name", value='test')
+                        create_project_btn = gr.Button("Create")
     
-                tensorboard_output = gr.Textbox(label="TensorBoard Output", lines=2)
-
-                start_tensorboard_btn.click(
-                    fn=start_tensorboard,
-                    inputs=[tensorboard_log_path,port_tensorboard],
-                    outputs=[tensorboard_output,start_tensorboard_btn,stop_tensorboard_btn,open_tensorboard_btn],
-                )
-                
-                stop_tensorboard_btn.click(
-                    fn=stop_tensorboard,
-                    outputs=[tensorboard_output,start_tensorboard_btn,stop_tensorboard_btn,open_tensorboard_btn]
-                )
-
-                open_tensorboard_btn.click(
-                    fn=launch_tensorboard,
-                    inputs=[port_tensorboard],
-                )
-                
-                refresh_tensorboard_btn.click(fn=refresh_tensorboard_projects, outputs=[tensorboard_project_dropdown, tensorboard_project_dropdown])
-                refresh_tensorboard_btn.click(fn=refresh_tensorboard_stage, outputs=[start_tensorboard_btn,stop_tensorboard_btn,open_tensorboard_btn])             
-                tensorboard_project_dropdown.change(fn=refresh_dropdown_tensorboard , outputs=[tensorboard_project_dropdown]) 
-                tensorboard_project_dropdown.change(fn=get_tensorboard_log_dir, inputs=tensorboard_project_dropdown, outputs=[tensorboard_log_path])
+                    with gr.Row():
+                        input_file_list = gr.Textbox(label="Input File List Path", value='./filelists/filelist.txt',interactive=False)
+                        output_file_list = gr.Textbox(label="Output File List Path", value='./filelists/filelist.json',interactive=False)
+                        output_feature_dir = gr.Textbox(label="Output Feature Directory", value='./stableTTS_datasets',interactive=False)
+                        
+                    language = gr.Dropdown(label="Language", choices=supported_languages, value="chinese")
+    
+                    resample_audio = gr.Checkbox(label="Resample Audio", value=False)
+                    copy_speaker = gr.Checkbox(label="Copy 3 audio files for use as references.",value=True)
+                    preprocess_output = gr.Textbox(label="Preprocess Output", lines=4)
+                    
+                    preprocess_btn = gr.Button("Preprocess Data",interactive=False)
+    
+                    preprocess_btn.click(
+                        fn=preprocess_audio_files,
+                        inputs=[input_file_list, output_feature_dir, output_file_list, language, resample_audio,copy_speaker],
+                        outputs=preprocess_output
+                    )
                
-
+                    create_project_btn.click(fn=create_project, inputs=[project_name], outputs=[input_file_list, output_file_list, output_feature_dir])
+                    create_project_btn.click(fn=button_enable, outputs=[preprocess_btn])
+    
+                with gr.TabItem("Train Model"):
+                    initial_projects = get_projects()
+                    initial_project = initial_projects[0] if initial_projects else None
+    
+                    if initial_project is not None:
+                        train_value, log_value, model_value = get_project_files(initial_project)
+                    else:
+                        train_value, log_value, model_value = './filelists/filelist.json', './runs', './checkpoints' 
+    
+                    with gr.Row():
+                        project_dropdown = gr.Dropdown(choices=initial_projects, value=initial_project, label="Project", interactive=True,allow_custom_value=True)
+                        refresh_projects_btn = gr.Button("Refresh Projects")             
+                        
+                    with gr.Row():
+                        train_dataset_path = gr.Textbox(label="Train Dataset Path", value=train_value,interactive=False)
+                        log_dir = gr.Textbox(label="Log Directory", value=log_value,interactive=False)
+                        model_save_path = gr.Textbox(label="Model Save Path", value=model_value,interactive=False)
+                    
+                    with gr.Row():
+                        batch_size = gr.Slider(label="Batch Size", minimum=1, maximum=128, step=1, value=16)
+                        log_interval = gr.Slider(label="Log Interval", minimum=1, maximum=100, step=1, value=16) 
+                        warmup_steps = gr.Slider(label="Warmup Steps", minimum=1, maximum=10000, step=1, value=200)
+                    
+                    with gr.Row():                 
+                        num_epochs = gr.Slider(label="Number of Epochs", minimum=1, maximum=10000, step=1, value=200)
+                        save_interval = gr.Slider(label="Save Interval", minimum=1, maximum=100, step=1, value=1)        
+                        learning_rate = gr.Number(label="Learning Rate", value=1e-4)
+                    
+                    with gr.Row():  
+                         use_finetune = gr.Checkbox(label="Use Finetune", value=True) 
+                         pretrain_model_path = gr.Textbox(label="Pretrain Model Path", value=pretrained_model_path,interactive=False)   
+                         use_finetune.change(enable_button_setting,inputs=[use_finetune],outputs=[pretrain_model_path])
+                             
+    
+                    train_output = gr.Textbox(label="Training Output", lines=4)
+                    
+                    with gr.Row():
+    
+                        train_start_model_btn = gr.Button("Start Train",interactive=False)
+                        train_stop_model_btn = gr.Button("Stop Train",interactive=False)               
+       
+                    refresh_projects_btn.click(fn=get_config_data,inputs=project_dropdown,outputs=[ batch_size, learning_rate,num_epochs,log_interval, save_interval, warmup_steps])
+                    refresh_projects_btn.click(fn=refresh_projects, outputs=[project_dropdown, project_dropdown])
+                    refresh_projects_btn.click(fn=refresh_dropdown_train, outputs=[project_dropdown]) 
+       
+                    project_dropdown.change(fn=get_config_data, inputs=project_dropdown, outputs=[ batch_size, learning_rate,num_epochs,log_interval, save_interval, warmup_steps])
+                    project_dropdown.change(fn=get_project_files, inputs=project_dropdown, outputs=[train_dataset_path, log_dir, model_save_path])
+    
+    
+                    refresh_projects_btn.click(fn=refresh_train_stage,inputs=[project_dropdown], outputs=[train_start_model_btn,pretrain_model_path,use_finetune])
+        
+                    train_stop_model_btn.click(fn=stop_training,outputs=[train_output,train_start_model_btn,train_stop_model_btn])
+                    train_start_model_btn.click(
+                          fn=train_model,
+                          inputs=[train_dataset_path, batch_size, learning_rate,num_epochs, model_save_path, log_dir, log_interval, save_interval, warmup_steps, use_finetune, pretrain_model_path],
+                      outputs=[train_output,train_start_model_btn,train_stop_model_btn])
+                                
+                with gr.TabItem("Tensorboard"):
+                    with gr.Row():
+                        initial_tensorboard_projects = get_tensorboard_projects()
+                        initial_tensorboard_project = initial_tensorboard_projects[0] if initial_tensorboard_projects else None
+                        tensorboard_project_dropdown = gr.Dropdown(choices=initial_tensorboard_projects, value=initial_tensorboard_project, label="Project", interactive=True,allow_custom_value=True)
+                        refresh_tensorboard_btn = gr.Button("Refresh Tensorboard")             
+             
+                        if initial_tensorboard_project is not None:
+                            log_value = get_tensorboard_log_dir(initial_tensorboard_project)
+                        else:
+                            log_value = './runs'
+    
+                    tensorboard_log_path = gr.Textbox(label="Tensorboard Log Directory", value=log_value,interactive=False)
+    
+    
+                    with gr.Row():    
+                         port_tensorboard = gr.Number(label="Port",value=6006)
+                         start_tensorboard_btn = gr.Button("Start TensorBoard",interactive=False)
+                         stop_tensorboard_btn = gr.Button("Stop TensorBoard",interactive=False)
+                         open_tensorboard_btn = gr.Button("Open TensorBoard",interactive=False)
+    
+        
+                    tensorboard_output = gr.Textbox(label="TensorBoard Output", lines=2)
+    
+                    start_tensorboard_btn.click(
+                        fn=start_tensorboard,
+                        inputs=[tensorboard_log_path,port_tensorboard],
+                        outputs=[tensorboard_output,start_tensorboard_btn,stop_tensorboard_btn,open_tensorboard_btn],
+                    )
+                    
+                    stop_tensorboard_btn.click(
+                        fn=stop_tensorboard,
+                        outputs=[tensorboard_output,start_tensorboard_btn,stop_tensorboard_btn,open_tensorboard_btn]
+                    )
+    
+                    open_tensorboard_btn.click(
+                        fn=launch_tensorboard,
+                        inputs=[port_tensorboard],
+                    )
+                    
+                    refresh_tensorboard_btn.click(fn=refresh_tensorboard_projects, outputs=[tensorboard_project_dropdown, tensorboard_project_dropdown])
+                    refresh_tensorboard_btn.click(fn=refresh_tensorboard_stage, outputs=[start_tensorboard_btn,stop_tensorboard_btn,open_tensorboard_btn])             
+                    tensorboard_project_dropdown.change(fn=refresh_dropdown_tensorboard , outputs=[tensorboard_project_dropdown]) 
+                    tensorboard_project_dropdown.change(fn=get_tensorboard_log_dir, inputs=tensorboard_project_dropdown, outputs=[tensorboard_log_path])
+               
             with gr.TabItem("Interface"):
                 with gr.Blocks(theme=gr.themes.Base()) as demo:
                     demo.load(None, None, js="() => {const params = new URLSearchParams(window.location.search);if (!params.has('__theme')) {params.set('__theme', 'light');window.location.search = params.toString();}}")
@@ -942,7 +944,10 @@ def create_interface():
                     generate_btn.click(generate_tts, [model_project_dropdown, model_checkpoint_dropdown, input_text, reference_audio, language_dropdown, step_slider, temperature_slider, length_scale_slider, solver_dropdown, cfg_slider,seed_value,seed_bool], outputs=[generated_audio, mel_plot,seed_value])
                     
                     seed_bool.change(fn=enable_button_setting,inputs=seed_bool,outputs=seed_value)
-      
+            
+
+        
+
         footer = gr.HTML(f"""
          <footer style="text-align: center; padding: 10px; font-size: 14px; color: grey; border-top: 1px solid #eaeaea;">
              All set! The models are ready to go. Running on <strong>{device}</strong>.
