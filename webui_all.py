@@ -535,11 +535,11 @@ def refresh_dropdown():
     return gr.Dropdown(choices=names,value=select, label="Project")
 
 def get_projects_interface(folder_path=r'./checkpoints') -> List[str]:
-    json_files = []
+    folders = []
     for folder in os.listdir(folder_path):
         names,select=get_checkpoints(folder)
-        if names!=[]:json_files.append(folder)
-    return json_files
+        if names!=[]:folders.append(folder)
+    return folders
 
 def refresh_projects_interface() -> Tuple[List[str], str]:
     projects = get_projects_interface()
@@ -826,10 +826,12 @@ def create_interface():
 
                     with gr.Row():
                         with gr.Column():
-                            initial_checkpoints, initial_checkpoint = get_checkpoints(initial_project)
-    
+                            initial_projects_interface, initial_project_interface = refresh_projects_interface()
+                            initial_checkpoints, initial_checkpoint = get_checkpoints(initial_project_interface)
+                            
+                    
                             with gr.Row():
-                                model_project_dropdown = gr.Dropdown(choices=initial_projects, value=initial_project, label="Project", interactive=True,allow_custom_value=True)
+                                model_project_dropdown = gr.Dropdown(choices=initial_projects_interface, value=initial_project_interface, label="Project", interactive=True,allow_custom_value=True)
                                 model_checkpoint_dropdown = gr.Dropdown(choices=initial_checkpoints, value=initial_checkpoint, label="Checkpoint", interactive=True,allow_custom_value=True)
                                 refresh_model_btn = gr.Button("Refresh Projects")             
                             
