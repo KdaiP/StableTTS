@@ -531,8 +531,20 @@ def refresh_dropdown_checkpoints(folder):
     return gr.Dropdown(choices=names,value=select, label="Checkpoint"),lag
 
 def refresh_dropdown():
-    names,select=refresh_projects()
+    names,select=refresh_projects_interface()
     return gr.Dropdown(choices=names,value=select, label="Project")
+
+def get_projects_interface(folder_path=r'./checkpoints') -> List[str]:
+    json_files = []
+    for folder in os.listdir(folder_path):
+        names,select=get_checkpoints(folder)
+        if names!=[]:json_files.append(folder)
+    return json_files
+
+def refresh_projects_interface() -> Tuple[List[str], str]:
+    projects = get_projects_interface()
+    first_project = projects[0] if projects else None
+    return projects, first_project
 
 @torch.inference_mode()
 def generate_speech(text, ref_audio, language, step, temperature, length_scale, solver, cfg):
@@ -810,6 +822,8 @@ def create_interface():
                 with gr.Blocks(theme=gr.themes.Base()) as demo:
                     demo.load(None, None, js="() => {const params = new URLSearchParams(window.location.search);if (!params.has('__theme')) {params.set('__theme', 'light');window.location.search = params.toString();}}")
             
+            
+
                     with gr.Row():
                         with gr.Column():
                             initial_checkpoints, initial_checkpoint = get_checkpoints(initial_project)
@@ -910,7 +924,7 @@ def create_interface():
                             generate_btn = gr.Button("Generate", elem_id="send-btn", visible=True, variant="primary")
                             mel_plot = gr.Plot(label="Mel Spectrogram Visualization")
             
-                        refresh_model_btn.click(fn=refresh_projects, outputs=[model_project_dropdown, model_project_dropdown])  
+                        refresh_model_btn.click(fn=refresh_projects_interface, outputs=[model_project_dropdown, model_project_dropdown])  
                         refresh_model_btn.click(fn=refresh_dropdown_speakers, inputs=[model_project_dropdown],  outputs=[speaker_dropdown,speaker_dropdown])  
                         refresh_model_btn.click(fn=get_checkpoints, inputs=[model_project_dropdown], outputs=[model_checkpoint_dropdown, model_checkpoint_dropdown])  
                         refresh_model_btn.click(fn=refresh_dropdown_checkpoints, inputs=[model_project_dropdown], outputs=[model_checkpoint_dropdown,language_dropdown])  
