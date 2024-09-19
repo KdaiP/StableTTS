@@ -7,6 +7,8 @@ soundfile # to make sure that torchaudio has at least one valid backend
 
 tensorboard
 
+cached_path
+
 # for monotonic_align
 numba
 

@@ -11,7 +11,7 @@ Next-generation TTS model using flow-matching and DiT, inspired by [Stable Diffu
 
 As the first open-source TTS model that tried to combine flow-matching and DiT, **StableTTS** is a fast and lightweight TTS model for chinese, english and japanese speech generation. It has 31M parameters. 
 
-✨ **Huggingface demo:** [🤗](https://huggingface.co/spaces/KdaiP/StableTTS1.1)
+✨ **Hugging Face demo:** [🤗](https://huggingface.co/spaces/KdaiP/StableTTS1.1)
 
 ## News
 
@@ -36,7 +36,7 @@ As the first open-source TTS model that tried to combine flow-matching and DiT, 
 
 ### Text-To-Mel model
 
-Download and place the model in the `./checkpoints` directory, it is ready for inference, finetuning and webui.
+By default, the inference scripts will automatically download the pretrained models from Hugging Face. For training, download the models and place them in the `checkpoints` directory.
 
 | Model Name | Task Details | Dataset | Download Link |
 |:----------:|:------------:|:-------------:|:-------------:|

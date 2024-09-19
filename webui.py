@@ -11,10 +11,12 @@ import gradio as gr
 
 from api import StableTTSAPI
 
+from cached_path import cached_path
+
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-tts_model_path = './checkpoints/checkpoint_0.pt'
-vocoder_model_path = './vocoders/pretrained/firefly-gan-base-generator.ckpt'
+tts_model_path = str(cached_path('hf://KdaiP/StableTTS1.1/StableTTS/checkpoint_0.pt'))
+vocoder_model_path = str(cached_path('hf://KdaiP/StableTTS1.1/vocoders/firefly-gan-base-generator.ckpt'))
 vocoder_type = 'ffgan'
 
 model = StableTTSAPI(tts_model_path, vocoder_model_path, vocoder_type).to(device)
