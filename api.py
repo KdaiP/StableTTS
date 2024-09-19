@@ -16,6 +16,8 @@ from text.japanese import japanese_to_ipa2
 from datas.dataset import intersperse
 from utils.audio import load_and_resample_audio
 
+from cached_path import cached_path
+
 def get_vocoder(model_path, model_name='ffgan') -> nn.Module:
     if model_name == 'ffgan':
         # training or changing ffgan config is not supported in this repo
@@ -83,8 +85,8 @@ class StableTTSAPI(nn.Module):
     
 if __name__ == '__main__':
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    tts_model_path = './checkpoints/checkpoint_0.pt'
-    vocoder_model_path = './vocoders/pretrained/vocos.pt'
+    tts_model_path = str(cached_path('hf://KdaiP/StableTTS1.1/StableTTS/checkpoint_0.pt'))
+    vocoder_model_path = str(cached_path('hf://KdaiP/StableTTS1.1/vocoders/vocos.pt'))
     
     model = StableTTSAPI(tts_model_path, vocoder_model_path, 'vocos')
     model.to(device)
