@@ -1,5 +1,5 @@
 import re
-from unidecode import unidecode
+from anyascii import anyascii
 import pyopenjtalk
 
 
@@ -108,7 +108,7 @@ def japanese_to_romaji_with_accent(text):
                 elif a2 == 1 and a2_next == 2:
                     text += '↑'
         if i < len(marks):
-            text += unidecode(marks[i]).replace(' ', '')
+            text += anyascii(marks[i]).replace(' ', '')
     return text
 
 
